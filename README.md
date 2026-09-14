@@ -2,10 +2,12 @@
 
 **Real-time web dashboard & backend for the WQM River Water Quality Monitor** — the presentation and action layer of the [WQM-Project](https://github.com/WQM-Project) ecosystem.
 
+**Live:** <https://wqm-web-dashboard.vercel.app>
+
 This repo owns everything a human sees or is alerted by. It ingests telemetry relayed from the [`gateway`](https://github.com/WQM-Project/gateway), persists it, renders it as live geospatial and time-series visualisations, surfaces predictions from [`water-quality-ml`](https://github.com/WQM-Project/water-quality-ml), and dispatches threshold-breach alerts to local authorities.
 
 > [!NOTE]
-> **Status: early.** The public landing page is built and deployable; the operator dashboard itself is not. The stack below is the agreed target, not a description of what already runs.
+> **Status: early.** The public landing page is live; the operator dashboard itself is not built yet. The stack below is the agreed target, not a description of what already runs.
 
 **Context** — Design Practicum, Team WQM, IIT Mandi. This repository is the data and dashboard workstream.
 
@@ -509,11 +511,13 @@ Vercel, connected to this repository.
 
 | Branch | Environment | URL |
 |---|---|---|
-| `main` | Production | _TBD_ |
-| `dev` | Staging | _TBD_ |
+| `main` | Production | <https://wqm-web-dashboard.vercel.app> |
+| `dev` | Staging | _not yet created_ |
 | PR branches | Preview | auto-generated per PR |
 
 Pushing to `main` deploys to production. Environment variables are configured in the Vercel project and are **not** committed.
+
+The project currently runs with **no environment variables set**, because nothing in the app reads one yet. Add each only when the code that consumes it lands — an empty value is not the same as an absent one, and `process.env.X ?? fallback` will not catch an empty string.
 
 ---
 
