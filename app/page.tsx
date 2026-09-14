@@ -152,25 +152,25 @@ export default function WqmPage() {
       title: "Edge Sensing Node",
       desc: "An STM32F722 aboard the boat samples twelve parameters, calibrates and median-filters on the edge, then serialises a compact JSON packet.",
       icon: Ship,
-      image: "/drone.png",
+      image: "/rc-boat.webp",
     },
     {
       title: "LoRa Telemetry",
       desc: "SX1278 radios carry packets roughly 2 km line-of-sight to a shore gateway — no Wi-Fi or reliable cellular needed in the valley floor.",
       icon: RadioTower,
-      image: "/real-time-satellite.png",
+      image: "/lora-gateway.webp",
     },
     {
       title: "Supabase & Forecasting",
       desc: "An ESP8266 gateway backhauls over 4G into Postgres. An XGBoost classifier grades every reading, an Isolation Forest flags implausible ones, and Prophet projects the trend ahead.",
       icon: Database,
-      image: "/biodiversity-tracking.png",
+      image: "/analytics-desk.webp",
     },
     {
       title: "Dashboard & Alerts",
       desc: "Readings stream to the browser over a realtime subscription. Breaches are forwarded as SMS to local authorities through hardware the project already owns — no per-message billing.",
       icon: BellRing,
-      image: "/deforestation-detect.png",
+      image: "/sms-alert.webp",
     },
   ]
 
@@ -382,7 +382,7 @@ export default function WqmPage() {
               className="text-[#A7ABB3] text-base md:text-lg max-w-[560px] mx-auto mb-8 leading-relaxed stagger-reveal text-white"
               style={{ animationDelay: "180ms" }}
             >
-              An autonomous river boat streaming twelve water-quality parameters over LoRa — with 24-hour Water Quality
+              A remote-controlled river boat streaming twelve water-quality parameters over LoRa — with 24-hour Water Quality
               Index forecasting and instant alerts to local authorities.
             </p>
             <div className="stagger-reveal" style={{ animationDelay: "270ms" }}>
@@ -417,7 +417,7 @@ export default function WqmPage() {
       <section className="relative py-12 border-y border-white/5 bg-[#0B0C0F] overflow-hidden md:py-8 md:pt-8 md:pb-6">
         <div className="w-full">
           <p className="text-center text-xs md:text-sm uppercase tracking-[0.2em] text-[#A7ABB3] mb-8">
-            Twelve parameters, sampled every five seconds
+            Twelve parameters, sampled every ten minutes
           </p>
           <div className="logo-marquee">
             <div className="logo-marquee-content">
@@ -568,8 +568,7 @@ export default function WqmPage() {
 
       <section id="architecture" className="relative py-20 md:py-32 px-4 animate-on-scroll">
         <div className="max-w-[1120px] w-full mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-stretch">
-            <div className="max-w-[720px]">
+          <div className="max-w-[720px] mb-12 md:mb-16">
               <div className="text-[10px] md:text-xs uppercase tracking-[0.15em] text-[#A7ABB3] mb-6 flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse" />
                 SYSTEM ARCHITECTURE
@@ -588,13 +587,16 @@ export default function WqmPage() {
                   dashboard
                 </span>
               </h2>
-              <p className="text-[#A7ABB3] text-base md:text-lg leading-relaxed mb-12">
+              <p className="text-[#A7ABB3] text-base md:text-lg leading-relaxed">
                 Four layers, each in its own repository. Manual sampling and lab analysis cannot catch a sudden pollution
                 spike; this pipeline is built to close that gap in seconds rather than weeks.
               </p>
+          </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-stretch">
+            <div>
               <div className="md:hidden mb-8">
-                <div className="rounded-[24px] p-1 w-full aspect-square overflow-hidden">
+                <div className="rounded-[24px] p-1 w-full aspect-[3/4] overflow-hidden">
                   <img
                     src={layers[selectedFeature].image || "/placeholder.svg"}
                     alt={layers[selectedFeature].title}
@@ -641,7 +643,7 @@ export default function WqmPage() {
             </div>
 
             <div className="hidden md:flex items-stretch justify-center">
-              <div className="relative w-full h-full min-h-[500px]">
+              <div className="relative w-full h-full min-h-[420px]">
                 {layers.map((layer, i) => {
                   const positionInStack = (i - selectedFeature + layers.length) % layers.length
                   const isActive = positionInStack === 0
