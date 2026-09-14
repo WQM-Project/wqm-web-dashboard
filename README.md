@@ -45,21 +45,6 @@ flowchart LR
 
 ---
 
-## What This Repo Is Responsible For
-
-| # | Responsibility | Detail |
-|---|---|---|
-| 1 | **Ingestion API** | Authenticated HTTPS endpoint the gateway POSTs telemetry to. Validates, timestamps, persists. |
-| 2 | **Persistence & schema** | Postgres schema, migrations, row-level security, retention policy. |
-| 3 | **Realtime delivery** | Push new readings to connected browsers without polling. |
-| 4 | **Geospatial visualisation** | River heatmaps, node positions, survey tracks, per-waypoint drill-down. |
-| 5 | **Time-series visualisation** | Per-parameter trends, multi-parameter comparison, forecast overlay. |
-| 6 | **Quality grading & display** | Current class from the XGBoost model, anomaly flags, Prophet trend forecast. |
-| 7 | **Alerting** | Threshold evaluation → SMS to authorities via MacroDroid, with a delivery audit log per recipient. |
-| 8 | **Public access** | Read-only public view of river health; authenticated view for operators. |
-
----
-
 ## Tech Stack
 
 ### Frontend
@@ -98,31 +83,13 @@ flowchart LR
 
 ## Divergence From the Master Spec
 
-> [!IMPORTANT]
-> The [WQM master specification](https://github.com/WQM-Project/WQM) currently names **Firebase Firestore** and **React 18 + Vite**. This repo intentionally diverges on both counts. This is a **proposal to the team**, not a unilateral change — raise objections on the issue tracker before we are locked in.
+The [master specification](https://github.com/WQM-Project/WQM) names **Firebase Firestore** and **React 18 + Vite**. This repo uses **Supabase Postgres** and **Next.js**. That is a proposal to the team, not a settled decision.
 
-### Firestore → Supabase Postgres
+**Why Postgres.** This project is geospatial and time-series at heart, and Firestore is weak at both: a `GeoPoint` stores a coordinate but cannot answer "within 500 m of this bend", and there is no `GROUP BY` or window function for rollups. Per-document billing is also what pushed the "data bucketing" workaround into the master spec — distorting the schema to dodge write costs. Postgres gives PostGIS, real SQL, typed columns that reject a malformed payload, and a database `water-quality-ml` can read directly with `read_sql`. Realtime push — the best reason to pick Firestore — is matched by Supabase Realtime.
 
-| Concern | Firestore | Supabase Postgres |
-|---|---|---|
-| Write cost at high sample rate | Per-document billing forced the **"data bucketing"** workaround in the master spec — aggregating a whole mission into one document purely to dodge write costs. | Row-per-reading is the natural model. No schema distortion for billing reasons. |
-| Geospatial queries | `GeoPoint` stores a coordinate but supports no spatial predicates — radius queries need geohash libraries and client-side filtering. | **PostGIS.** `ST_DWithin`, `ST_Length`, nearest-neighbour — server-side and indexed. This is a river monitoring project; geospatial is not optional. |
-| Realtime push | `onSnapshot` listeners — genuinely good, and a fair part of why the team chose Firestore. | Supabase Realtime is the direct equivalent: logical replication out to a WebSocket. Nothing is lost here. |
-| Time-series aggregation | No `GROUP BY`, no window functions. Hourly/daily rollups must be precomputed in Cloud Functions. | `date_trunc` + window functions. Rollups are a materialized view. |
-| ML pipeline integration | `water-quality-ml` would consume a document API. | Pandas reads Postgres directly (`read_sql`). Forecasts write back to a table. Far less glue code. |
-| Schema guarantees | Schemaless — a firmware field rename silently corrupts the dataset. | Typed columns + constraints. A malformed payload is rejected at insert. |
-| Portability | Proprietary. | Plain Postgres — self-hostable, dumpable, portable. |
+**Why Next.js.** Two needs appeared after the spec was written: the gateway needs a server-side endpoint to POST telemetry to, and alert dispatch needs somewhere server-side to hold credentials. A static Vite SPA can do neither without a second service. Next.js Route Handlers give us both in one deployment, and it is still React — component work carries over unchanged.
 
-**Cost of diverging:** the gateway's upload target changes (one URL + auth header), and any Firebase code already written in sibling repos needs revisiting. Worth confirming with the gateway owner early.
-
-### React + Vite → Next.js
-
-The master spec's "React 18 SPA" predates two requirements that have since appeared:
-
-1. **A server-side ingestion endpoint** for the gateway to POST to. A Vite SPA is static — it needs a separate backend service. Next.js Route Handlers give us this in the same deployment.
-2. **A server-side alert dispatcher** holding the Telegram bot token and modem credentials. Same reasoning — these must never reach the browser bundle.
-
-Next.js is still React 18+. Component-level work carries over unchanged.
+**Cost of diverging:** the gateway's upload target changes (one URL and an auth header), and any Firebase code already written in sibling repos needs revisiting. Worth settling with the gateway owner early.
 
 ---
 
@@ -149,7 +116,7 @@ Only one channel satisfies both.
 
 - No Twilio SDK and no `TWILIO_*` credentials anywhere.
 - `alert_deliveries` records a `channel` (`sms_macrodroid` | `sms_modem` | `telegram`) and a `provider_ref` rather than a vendor message SID, because there is no longer a single vendor.
-- The handset is now infrastructure. It needs power, credit and signal, and its liveness should be monitored like any other node — a silent handset means silent alerts. See Open Question 8.
+- The handset is now infrastructure. It needs power, credit and signal, and its liveness should be monitored like any other node — a silent handset means silent alerts. See Open Question 4.
 
 ---
 
@@ -179,7 +146,7 @@ The gateway relays the packet emitted by [`edge-sensing-node`](https://github.co
 | Field | Type | Unit | Notes |
 |---|---|---|---|
 | `id` | `text` | — | Node identifier; supports multi-node deployment. |
-| `ts` | `bigint` | ms | `HAL_GetTick()` — **milliseconds since node boot, not epoch.** See [Open Questions](#open-questions). |
+| `ts` | `bigint` | ms | `HAL_GetTick()` — **milliseconds since node boot, not epoch.** See [conflict 4](#the-specific-conflicts). |
 | `pH` | `real` | 0–14 | Two-point calibrated. |
 | `turb_ntu` | `real` | NTU | Quadratic polynomial fit. |
 | `tds_ppm` | `real` | ppm | Temperature-compensated. |
@@ -199,7 +166,7 @@ The gateway relays the packet emitted by [`edge-sensing-node`](https://github.co
 
 | Source | Shape |
 |---|---|
-| **A. Firmware** — [`edge-sensing-node`](https://github.com/WQM-Project/edge-sensing-node) | `id`, `ts`, `pH`, `turb_ntu`, `tds_ppm`, `do_mgl`, `ec_uscm`, `orp_mv`, `temp_w1`, `temp_w2`, `depth_cm`, `temp_air`, `humidity`, `pressure_hpa` |
+| **A. Firmware** — [`edge-sensing-node`](https://github.com/WQM-Project/edge-sensing-node) | The 14 fields in [Telemetry Contract](#telemetry-contract) above |
 | **B. Dashboard spec** — Design Practicum summary | `node_id`, `timestamp` (ISO 8601), `location{lat,lng}`, `pH`, `turbidity_ntu`, `tds_ppm`, `temperature_c`, `dissolved_oxygen_mgL`, `conductivity_msCm`, `orp_mv`, `battery_v` |
 | **C. ML features** — [`water-quality-ml`](https://github.com/WQM-Project/water-quality-ml) README | pH, Turbidity, Conductivity, Dissolved Oxygen, **Chlorides**, ORP, Temperature — 7 features, TDS deliberately dropped |
 | **D. ML API input** — `water-quality-ml/src/api.py` | `ph`, `Hardness`, `Solids`, `Chloramines`, `Sulfate`, `Conductivity`, `Organic_carbon`, `Trihalomethanes`, `Turbidity` |
@@ -372,17 +339,22 @@ sequenceDiagram
 
 ---
 
-## Dashboard Views
+## Routes & Views
 
-The five views agreed in the Design Practicum data & dashboard summary, mapped onto this app's routes.
+The five views agreed in the Design Practicum summary, mapped onto this app's routes.
 
-| View | Route | Contents | Blocked by |
-|---|---|---|---|
-| **Map View** | `/map` | Leaflet pin per node, coloured by live quality class; click for a mini trend popup | Conflict 1 — no GPS |
-| **Time-Series** | `/overview` | Per-parameter charts at 24 h / 7 d / 30 d, with CPCB and IS 10500 threshold lines overlaid | — |
-| **Quality + Forecast** | `/overview` | Live quality class, with the Prophet forecast as a dashed line | Prophet not yet implemented upstream |
-| **Alerts Log** | `/alerts` | Breach history — timestamp, node, parameter, channel used, delivery status | — |
-| **Node Health** | `/nodes` | Battery voltage, last-seen time, signal strength per node | Conflict 2 — no `battery_v` |
+| Route | Access | View | Contents | Blocked by |
+|---|---|---|---|---|
+| `/` | Public | Landing | River health summary, live packet, architecture | — |
+| `/overview` | Public | **Time-Series** + **Quality & Forecast** | Per-parameter charts at 24 h / 7 d / 30 d with CPCB and IS 10500 threshold lines; live quality class with the Prophet forecast dashed | Prophet not implemented upstream |
+| `/map` | Public | **Map View** | Leaflet pin per node coloured by quality class; click for a trend popup | Conflict 1 — no GPS |
+| `/map/3d` | Public | River scene | Three.js depth profile and pollutant plume | — |
+| `/nodes` | Auth | **Node Health** | Battery voltage, last-seen, signal strength per node | Conflict 2 — no `battery_v` |
+| `/nodes/[deviceId]` | Auth | Node detail | Full history, raw packets, diagnostics | — |
+| `/missions/[id]` | Auth | Mission replay | Scrub a survey timeline, export | — |
+| `/alerts` | Auth | **Alerts Log** | Breach history — timestamp, node, parameter, channel, delivery status | — |
+| `/api/ingest` | Node key | — | `POST` — gateway telemetry ingestion | — |
+| `/api/alerts` | Service | — | `POST` — alert dispatch via MacroDroid webhook, called by `pg_net` | — |
 
 ---
 
@@ -461,23 +433,6 @@ The five views agreed in the Design Practicum data & dashboard summary, mapped o
 - [ ] Anomaly annotation and operator notes
 - [ ] PWA offline mode for field use
 - [ ] i18n (English / Hindi)
-
----
-
-## Route Map
-
-| Route | Access | Purpose |
-|---|---|---|
-| `/` | Public | Landing — river health summary, current WQI, headline chart |
-| `/overview` | Public | Dashboard grid — gauges, live series, alert feed |
-| `/map` | Public | Leaflet map, heatmap layers, track overlay, node drill-down |
-| `/map/3d` | Public | Three.js river scene with plume visualisation |
-| `/nodes` | Auth | Node fleet — health, calibration state, last-seen |
-| `/nodes/[deviceId]` | Auth | Single node — full history, raw packets, diagnostics |
-| `/missions/[id]` | Auth | Mission replay and export |
-| `/alerts` | Auth | Alert history, acknowledgement, contacts, thresholds |
-| `/api/ingest` | Node key | `POST` — gateway telemetry ingestion |
-| `/api/alerts` | Service | `POST` — internal alert dispatch via MacroDroid webhook, called by `pg_net` |
 
 ---
 
@@ -593,22 +548,17 @@ gitGraph
 
 ## Open Questions
 
-These need answers from the wider team before implementation locks in.
+Decisions the wider team needs to make. Data-shape conflicts are tracked separately in [Upstream Contract Reconciliation](#upstream-contract-reconciliation).
 
 | # | Question | Blocks | Owner |
 |---|---|---|---|
 | 1 | **Backend switch to Supabase** — is the team agreed? The gateway's upload target changes. | Schema, ingestion | Gateway owner + ML |
-| 2 | **GPS coordinates are absent from the telemetry packet.** The master spec specifies a NEO-6M for geotagging, but the `edge-sensing-node` JSON has no `lat` / `lon` field. Without them there is no map layer. | Map, heatmap, PostGIS | Edge node owner |
-| 3 | **`ts` is `HAL_GetTick()`** — milliseconds since boot, not epoch. Server-side timestamping covers the normal case, but packets buffered during a LoRa outage would be misattributed in time. Should the node carry an RTC? | Time-series accuracy | Edge node owner |
-| 4 | **Threshold values** — the rule layer uses CPCB / BIS limits. Which exact limits, per parameter, and are they the same values the dashboard should draw as threshold lines on charts? | Alerting, charts | ML + domain lead |
-| 5 | **Alert recipients and escalation policy** — who is contacted, at what severity, and with what cool-down to prevent alert storms? | Alert dispatch | Project lead |
+| 2 | **Threshold values** — the rule layer uses CPCB / BIS limits. Which exact limits, per parameter, and are they the same values the dashboard draws as threshold lines on charts? | Alerting, charts | ML + domain lead |
+| 3 | **Alert recipients and escalation policy** — who is contacted, at what severity, and with what cool-down to prevent alert storms? | Alert dispatch | Project lead |
+| 4 | **Who owns the MacroDroid handset?** It becomes real infrastructure — power, SIM credit, signal, uptime monitoring. A silent handset means silent alerts, which is worse than none because it looks fine. | Alert delivery | Project lead |
+| 5 | **Numeric index or class?** The classifier emits four categories; the dashboard spec shows a WQI gauge. Is a numeric WQI still wanted, and if so how is it computed? | Grading UI | ML + domain lead |
 | 6 | **Leaflet vs deck.gl** — Leaflet is in the master spec, but WebGL-accelerated heatmaps scale better with dense survey tracks. Decide before the map layer is built. | Map implementation | This repo |
 | 7 | **Data retention** — how long are raw readings kept at full resolution before downsampling? | Schema, cost | Project lead |
-| 8 | **Who owns the MacroDroid handset?** It becomes real infrastructure — it needs power, SIM credit, signal and uptime monitoring. A silent handset means silent alerts, which is worse than no alerting at all because it looks fine. | Alert delivery | Project lead |
-| 9 | **Chloride sensor.** The v2 model uses Chlorides as a feature; the sensor suite has none. Add the sensor, or retrain without it? | Grading accuracy | ML + edge node |
-| 10 | **`api.py` accepts the Kaggle schema, not the boat's.** The `river_beas_v2` models are committed but the service still loads `kaggle_v1`. When does the API switch to the real payload? | `/predict` integration | ML |
-| 11 | **Numeric index or class?** The classifier emits four categories; the dashboard spec shows a WQI gauge. Is a numeric WQI still wanted, and if so how is it computed? | Grading UI | ML + domain lead |
-| 12 | **Conductivity units.** µS/cm in firmware, mS/cm in the dashboard spec. Which is canonical? | Schema, charts | Edge node + this repo |
 
 ---
 
