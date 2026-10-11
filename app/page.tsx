@@ -753,11 +753,16 @@ export default function WqmPage() {
             Continuous, geotagged water quality data for the Beas, the Uhl and the Suketi — open, and built in the open.
           </p>
 
+          <Button asChild className="mb-4 rounded-full bg-white px-8 py-6 text-base text-neutral-950 hover:bg-neutral-200">
+            <a href="/dashboard">Open monitoring dashboard</a>
+          </Button>
+          <div>
           <a href="https://github.com/WQM-Project" target="_blank" rel="noopener noreferrer">
             <Button className="glass-button text-base rounded-full bg-white/5 border border-white/20 hover:bg-white/15 hover:border-white/30 transition-all duration-300 text-white px-8 py-6 md:text-base">
               Explore the project
             </Button>
           </a>
+          </div>
         </div>
       </section>
 

@@ -7,7 +7,76 @@
 This repo owns everything a human sees or is alerted by. It ingests telemetry relayed from the [`gateway`](https://github.com/WQM-Project/gateway), persists it, renders it as live geospatial and time-series visualisations, surfaces predictions from [`water-quality-ml`](https://github.com/WQM-Project/water-quality-ml), and dispatches threshold-breach alerts to local authorities.
 
 > [!NOTE]
-> **Status: early.** The public landing page is live; the operator dashboard itself is not built yet. The stack below is the agreed target, not a description of what already runs.
+> **Current local status (12 October 2026):** `/dashboard` is implemented with measurement cards, selectable trends, temperature comparison, packet activity, a single-boat view, a Leaflet map near IIT Mandi North Campus, packet inspection and CSV export. It reads an isolated synthetic WQM dataset by default; Gateway history reads actual stored uploads, including test packets. Cellular HTTPS ingestion and duplicate handling are verified. Real GPS integration, ML forecasts, alerts and admin authentication remain future work. These local changes have not been deployed or pushed.
+
+### Run the dashboard
+
+Start with `npm run dev`, then open `http://localhost:3000/dashboard`.
+The landing page also includes an **Open monitoring dashboard** link.
+The moon/sun button in the dashboard header switches between light and dark
+palettes. The choice is saved in browser storage and a dashboard-scoped cookie,
+so page reloads render the saved palette. Charts, packet dialogs and map controls
+follow the palette; OpenStreetMap raster tiles use a CSS filter in dark mode.
+
+Demo readings live in `public.dashboard_demo_packets`, separate from
+`public.telemetry_packets`. The seed creates 96 synthetic readings for one boat
+(one virtual node, at 15-minute intervals) and enables RLS with
+no direct anon/authenticated access. It does not change gateway ingestion or
+the allowlist. The read-only Next.js `/api/dashboard` route uses a server key
+to read WQM only; credentials are never passed to the browser.
+
+```powershell
+node --env-file=.env.local scripts/seed-dashboard-demo.mjs
+```
+
+This WQM-only script is idempotent: an existing 96-row dataset is preserved,
+not replaced. The original three-node demo is reduced by removing only the two
+extra synthetic nodes using `202610120001_single_boat_demo.sql`. It applies the saved `202610110001_dashboard_demo.sql` when the
+demo table is absent. Local script execution uses the isolated `pg` dependency
+and verified Supabase CA in `.wqm-tools`, as documented in the backend setup.
+
+Switch between **Workspace readings** and **Gateway history** for the single boat and a
+1/6/24-hour window, select any of the 12 chart parameters, inspect a packet or
+export the selected readings. Windows end at the latest stored packet, not the
+current clock. Refresh fetches stored data; it does not generate new readings.
+Packet counts do not claim live connectivity, and demo values are not water
+safety assessments. The server currently loads at most 500 packets per source
+and displays a notice if that limit is reached.
+The interface uses neutral labels; the header's **About these readings** button
+explains which source is generated or uploaded. Internal demo IDs remain in raw
+stored packets and CSV exports for traceability.
+
+### Boat map
+
+Google Maps support is prepared as an optional provider, with Normal, Satellite,
+Terrain and Hybrid selection plus dashboard theme matching. Follow
+[Google Maps setup](docs/GOOGLE_MAPS_SETUP.md) for the no-billing prototype key
+or the future standard production key. Prototype mode supplies Google's test
+map ID automatically. Google rendering was verified locally on 12 October 2026
+with the supplied key: all four views, light/dark roadmap and marker controls.
+Leaflet stays active until a key is set; missing credentials
+do not break the existing map. A production key additionally requires a custom
+JavaScript map ID.
+
+The overview includes a Leaflet 1.9.4 map with OpenStreetMap standard tiles,
+zoom/pan, a recenter button, marker popups and visible attribution. It needs
+no Google Maps key. Tiles load from `https://tile.openstreetmap.org` in the
+browser; retain attribution and follow its [tile usage policy](https://operations.osmfoundation.org/policies/tiles/).
+For higher traffic or offline operation, configure an appropriate tile provider;
+do not bulk-download or prefetch standard OpenStreetMap tiles.
+
+`lib/map-config.ts` contains the approximate IIT Mandi North Campus reference
+(`31.78129, 76.99750`, from [OSM-based Mapcarta](https://mapcarta.com/W761379545))
+and a separate illustrative boat marker nearby. These are display-only constants,
+not stored GPS readings or additions to the 14-field telemetry packet.
+`components/ui/dashboard-4-utils/leaflet-boat-map.tsx` imports Leaflet client-side and
+removes the map on unmount; CSS is scoped to the dashboard route.
+
+Demo mode labels the single boat marker as synthetic. Gateway history shows
+only the campus reference and **GPS pending** until actual GPS data is wired in.
+The map accepts an optional validated `{ latitude, longitude, recordedAt }`
+position for future integration, but no current API supplies it. Extending the
+edge/gateway/backend contract is still required before plotting real GPS fixes.
 
 **Context** — Design Practicum, Team WQM, IIT Mandi. This repository is the data and dashboard workstream.
 

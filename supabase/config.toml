@@ -1,0 +1,4 @@
+project_id = "wqm"
+
+[functions.ingest]
+verify_jwt = false
