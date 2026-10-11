@@ -7,7 +7,7 @@
 This repo owns everything a human sees or is alerted by. It ingests telemetry relayed from the [`gateway`](https://github.com/WQM-Project/gateway), persists it, renders it as live geospatial and time-series visualisations, surfaces predictions from [`water-quality-ml`](https://github.com/WQM-Project/water-quality-ml), and dispatches threshold-breach alerts to local authorities.
 
 > [!NOTE]
-> **Current local status (12 October 2026):** `/dashboard` is implemented with measurement cards, selectable trends, temperature comparison, packet activity, a single-boat view, a Leaflet map near IIT Mandi North Campus, packet inspection and CSV export. It reads an isolated synthetic WQM dataset by default; Gateway history reads actual stored uploads, including test packets. Cellular HTTPS ingestion and duplicate handling are verified. Real GPS integration, ML forecasts, alerts and admin authentication remain future work. These local changes have not been deployed or pushed.
+> **Current local status (12 October 2026):** `/dashboard` is implemented with measurement cards, selectable trends, dissolved-solids trend, packet activity, a single-boat view, a Leaflet map near IIT Mandi North Campus, packet inspection and CSV export. It reads an isolated synthetic WQM dataset by default; Gateway history reads actual stored uploads, including test packets. Cellular HTTPS ingestion and duplicate handling are verified. Real GPS integration, ML forecasts, alerts and admin authentication remain future work. These local changes have not been deployed or pushed.
 
 ### Run the dashboard
 

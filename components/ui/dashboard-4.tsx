@@ -31,7 +31,7 @@ import { dateLabel, METRICS, timeLabel } from "@/lib/dashboard";
 import type { DashboardData, MetricKey, Reading } from "@/lib/dashboard";
 import { DashboardStats } from "./dashboard-4-utils/stats";
 import { MetricTrendChart } from "./dashboard-4-utils/metric-trend-chart";
-import { WaterTemperatureChart } from "./dashboard-4-utils/water-temperature-chart";
+import { DissolvedSolidsChart } from "./dashboard-4-utils/dissolved-solids-chart";
 import { PacketActivityChart } from "./dashboard-4-utils/packet-activity-chart";
 import { NodeSummary } from "./dashboard-4-utils/node-summary";
 import { QuickActions } from "./dashboard-4-utils/quick-actions";
@@ -530,7 +530,7 @@ export function Dashboard({
                       metricKey={metric}
                       onMetricChange={setMetric}
                     />
-                    <WaterTemperatureChart readings={readings} />
+                    <DissolvedSolidsChart readings={readings} />
                     <BoatMap demo={demo} theme={theme} />
                     <PacketActivityChart readings={readings} />
                     <NodeSummary readings={windowRows} />

@@ -13,37 +13,34 @@ import { timeLabel } from "@/lib/dashboard";
 import { EmptyChart, Panel, tooltipStyle } from "./shared";
 import type { ChartProps } from "./shared";
 
-export function WaterTemperatureChart({ readings }: ChartProps) {
+export function DissolvedSolidsChart({ readings }: ChartProps) {
   const latest = readings.at(-1)?.payload;
-  const difference = latest
-    ? Math.abs(latest.temp_w1 - latest.temp_w2).toFixed(2)
-    : "—";
+  const value = latest?.tds_ppm.toFixed(1) ?? "—";
   return (
     <Panel
-      title="Water temperature"
-      subtitle="Primary and backup probes, in °C."
+      title="Dissolved solids"
+      subtitle="Total dissolved solids (TDS)."
     >
       <p className="mt-1 text-3xl font-semibold tabular-nums">
-        {difference}
+        {value}
         <span className="ml-2 text-xs font-normal text-muted-foreground">
-          °C apart
+          ppm
         </span>
       </p>
       <p className="mb-6 mt-2 text-xs text-muted-foreground">
-        Difference in the latest reading
+        Latest stored reading
       </p>
       {readings.length ? (
         <div
           className="h-40"
           role="img"
-          aria-label="Primary and backup water temperature trends"
+          aria-label="Total dissolved solids trend in parts per million"
         >
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={readings.map((row) => ({
                 time: timeLabel(row.recorded_at),
-                primary: row.payload.temp_w1,
-                backup: row.payload.temp_w2,
+                tds: row.payload.tds_ppm,
               }))}
               margin={{ left: -30, right: 3 }}
             >
@@ -64,27 +61,17 @@ export function WaterTemperatureChart({ readings }: ChartProps) {
               <Tooltip
                 contentStyle={tooltipStyle}
                 formatter={(value: number, name: string) => [
-                  `${Number(value).toFixed(2)} °C`,
+                  `${Number(value).toFixed(1)} ppm`,
                   name,
                 ]}
               />
               <Line
                 type="monotone"
-                dataKey="primary"
-                name="Primary"
+                dataKey="tds"
+                name="TDS"
                 stroke="var(--wqm-chart-line)"
                 strokeWidth={2}
                 dot={readings.length === 1}
-                isAnimationActive={false}
-              />
-              <Line
-                type="monotone"
-                dataKey="backup"
-                name="Backup"
-                stroke="var(--wqm-chart-secondary)"
-                strokeWidth={2}
-                strokeDasharray="4 3"
-                dot={false}
                 isAnimationActive={false}
               />
             </LineChart>
@@ -94,8 +81,7 @@ export function WaterTemperatureChart({ readings }: ChartProps) {
         <EmptyChart />
       )}
       <div className="mt-4 flex gap-4 text-xs text-muted-foreground">
-        <span>● Primary</span>
-        <span className="text-muted-foreground">● Backup</span>
+        <span>● TDS · ppm</span>
       </div>
     </Panel>
   );
