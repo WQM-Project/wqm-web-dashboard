@@ -2,10 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, ArrowUpRight, Check, Database, FlaskConical, MapPin, RadioTower, Ship, ShieldCheck } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, Check, Database, Droplets, FlaskConical, Gauge, MapPin, RadioTower, Ship, ShieldCheck, Wind } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollReveal, ScrollText } from '@/components/ui/text-scroll-animation';
-import { PARAMETERS } from '@/lib/telemetry';
 import { cn } from '@/lib/utils';
 
 const cardStyle = 'h-full overflow-hidden rounded-3xl border-[var(--landing-border)] bg-[var(--landing-panel)] text-[var(--landing-fg)] shadow-none';
@@ -22,19 +21,25 @@ const analysis = [
   { label: 'Forecasts', title: 'Understand where the trend is heading.', detail: 'Time-series forecasting with Prophet is planned for the next phase. Forecasts and automatic alerts are not yet available in the workspace.', tags: ['In development'] },
 ];
 const workspaceTools = ['Trends', 'Location', 'Packets'] as const;
+const sensorGroups = [
+  { label: 'Water', icon: Droplets, measurements: ['pH', 'Dissolved oxygen', 'Turbidity', 'Dissolved solids', 'Conductivity', 'Redox potential', 'Temperature'] },
+  { label: 'Depth', icon: Gauge, measurements: ['Water depth'] },
+  { label: 'Weather', icon: Wind, measurements: ['Air temperature', 'Humidity', 'Pressure'] },
+];
 
 export function Features() {
-  const [parameterKey, setParameterKey] = useState('pH');
+  const [sensorIndex, setSensorIndex] = useState(0);
   const [stage, setStage] = useState(0);
   const [tool, setTool] = useState<typeof workspaceTools[number]>('Trends');
   const [analysisIndex, setAnalysisIndex] = useState(0);
-  const parameter = PARAMETERS.find((item) => item.key === parameterKey) || PARAMETERS[0];
+  const selectedSensors = sensorGroups[sensorIndex];
+  const SensorIcon = selectedSensors.icon;
   const selectedAnalysis = analysis[analysisIndex];
 
   return (
-    <section id="features" aria-labelledby="features-title" className="scroll-mt-24 overflow-hidden bg-[var(--landing-bg)] px-6 py-20 text-[var(--landing-fg)] md:py-28">
+    <section id="features" aria-labelledby="features-title" className="scroll-mt-24 overflow-hidden bg-[var(--landing-bg)] px-6 py-12 text-[var(--landing-fg)] md:py-16">
       <div className="mx-auto max-w-6xl">
-        <ScrollReveal className="mx-auto mb-12 max-w-2xl text-center md:mb-16">
+        <ScrollReveal className="mx-auto mb-8 max-w-2xl text-center md:mb-10">
           <p className="mb-5 text-sm text-[var(--landing-muted)]">What we’re building</p>
           <h2 id="features-title" className="text-balance font-serif text-4xl leading-tight md:text-6xl"><ScrollText text="One boat. A wider view." spread={3} /></h2>
           <p className="mt-6 text-pretty leading-relaxed text-[var(--landing-muted)]">From measurements on the river to a workspace on shore. Explore the pieces that make WQM work.</p>
@@ -43,17 +48,22 @@ export function Features() {
         <div className="grid grid-cols-6 gap-4">
           <ScrollReveal className="col-span-6 sm:col-span-3 lg:col-span-2">
             <Card className={cardStyle}><CardContent className="flex h-full flex-col p-6">
-              <div className="relative mx-auto mb-7 flex h-28 w-48 items-center justify-center">
-                <svg viewBox="0 0 200 110" className="absolute inset-0 size-full text-[var(--landing-border)]" aria-hidden="true"><ellipse cx="100" cy="55" rx="92" ry="45" fill="none" stroke="currentColor" strokeWidth="2" transform="rotate(-8 100 55)" /></svg>
-                <span className="text-6xl font-semibold tracking-tight">12</span>
+              <div className="relative mb-6 flex h-36 items-center justify-center overflow-hidden rounded-2xl bg-[var(--landing-bg)]" aria-hidden="true">
+                <svg viewBox="0 0 320 144" preserveAspectRatio="none" className="absolute inset-0 size-full text-[var(--landing-border)]">
+                  <path d="M-20 110 Q60 55 160 100 T340 90 M-20 128 Q70 72 170 118 T340 108 M-20 145 Q80 92 180 138 T340 127" fill="none" stroke="currentColor" strokeWidth="1.5" />
+                  <ellipse cx="160" cy="72" rx="65" ry="40" fill="none" stroke="currentColor" transform="rotate(-14 160 72)" />
+                  <ellipse cx="160" cy="72" rx="85" ry="55" fill="none" stroke="currentColor" transform="rotate(-14 160 72)" />
+                </svg>
+                <div className="relative flex size-20 items-center justify-center rounded-full bg-[var(--landing-panel)]"><SensorIcon className="size-9 stroke-1" /></div>
               </div>
-              <h3 className="text-xl font-medium">More than pH.</h3>
-              <p className={cn(muted, 'mb-5 mt-2')}>Water chemistry, depth and atmospheric conditions in one sensor packet.</p>
-              <label htmlFor="feature-parameter" className="mb-2 text-xs text-[var(--landing-muted)]">Explore a packet field</label>
-              <select id="feature-parameter" value={parameterKey} onChange={(event) => setParameterKey(event.target.value)} className="w-full rounded-xl border border-[var(--landing-border)] bg-[var(--landing-bg)] p-3 text-sm focus-visible:outline-2">
-                {PARAMETERS.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}
-              </select>
-              <p aria-live="polite" className="mt-3 text-xs text-[var(--landing-muted)]"><code>{parameter.key}</code> · {parameter.unit || 'unitless'}</p>
+              <h3 className="text-xl font-medium">A fuller picture of the river.</h3>
+              <p className={cn(muted, 'mt-2')}>Onboard sensing brings water chemistry, depth and weather into the same picture.</p>
+              <div className="mb-4 mt-5 flex flex-wrap gap-2" aria-label="Explore onboard sensing">
+                {sensorGroups.map((group, index) => <button key={group.label} type="button" aria-pressed={sensorIndex === index} onClick={() => setSensorIndex(index)} className={cn(control, sensorIndex === index ? 'border-[var(--landing-fg)] bg-[var(--landing-fg)] text-[var(--landing-bg)]' : 'border-[var(--landing-border)]')}>{group.label}</button>)}
+              </div>
+              <div aria-live="polite" aria-label={`${selectedSensors.label} measurements`} className="flex min-h-24 flex-wrap content-start gap-x-3 gap-y-2 text-xs text-[var(--landing-muted)]">
+                {selectedSensors.measurements.map((measurement) => <span key={measurement} className="inline-flex items-center gap-1.5"><span className="size-1 rounded-full bg-current opacity-50" aria-hidden="true" />{measurement}</span>)}
+              </div>
             </CardContent></Card>
           </ScrollReveal>
 

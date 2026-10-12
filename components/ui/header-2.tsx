@@ -14,7 +14,6 @@ import { useLandingTheme } from '@/components/landing/landing-theme';
 import { SkyToggle } from '@/components/ui/sky-toggle';
 
 const links = [
-  { label: 'Our project', href: '#boat-scene' },
   { label: 'Workspace', href: '#workspace-preview' },
   { label: 'Features', href: '#features' },
   { label: 'Core team', href: '#core-team' },

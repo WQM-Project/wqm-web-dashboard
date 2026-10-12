@@ -29,8 +29,8 @@ export function ContainerScroll({ titleComponent, children }: {
   const translate = useTransform(scrollYProgress, [0, 1], [40, 0]);
 
   return (
-    <div ref={containerRef} className="relative mx-auto w-full max-w-7xl px-4 py-24 md:px-12 md:py-36" style={{ perspective: '1000px' }}>
-      <motion.div className="mx-auto mb-12 max-w-3xl text-center md:mb-16" style={{ y: reducedMotion ? 0 : translate }}>
+    <div ref={containerRef} className="relative mx-auto w-full max-w-7xl px-4 pb-6 pt-14 md:px-12 md:pb-8 md:pt-20" style={{ perspective: '1000px' }}>
+      <motion.div className="mx-auto mb-8 max-w-3xl text-center md:mb-10" style={{ y: reducedMotion ? 0 : translate }}>
         {titleComponent}
       </motion.div>
       <motion.div

@@ -28,7 +28,7 @@ export function WorkspacePreview() {
           draggable={false}
         />
       </ContainerScroll>
-      <ScrollReveal className="mx-auto -mt-12 flex max-w-6xl flex-col items-center gap-5 px-6 pb-24 md:-mt-20">
+      <ScrollReveal className="mx-auto flex max-w-6xl flex-col items-center gap-4 px-6 pb-12 md:pb-16">
         <p className="text-xs text-[var(--landing-muted)]">Dashboard overview · stored readings</p>
         <Link href="/dashboard" className="flex items-center gap-2 rounded-full border border-[var(--landing-border)] px-6 py-3 text-sm hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-offset-4">Open dashboard <ArrowUpRight className="size-4" aria-hidden="true" /></Link>
       </ScrollReveal>

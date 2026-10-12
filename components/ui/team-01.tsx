@@ -8,9 +8,9 @@ import { coreTeam } from '@/components/landing/team-data';
 
 export default function CoreTeam() {
   return (
-    <section id="core-team" aria-labelledby="team-title" className="scroll-mt-24 bg-[var(--landing-bg)] px-6 py-20 text-[var(--landing-fg)] md:py-28">
+    <section id="core-team" aria-labelledby="team-title" className="scroll-mt-24 bg-[var(--landing-bg)] px-6 py-12 text-[var(--landing-fg)] md:py-16">
       <div className="mx-auto max-w-6xl">
-        <ScrollReveal className="mx-auto mb-12 flex max-w-2xl flex-col items-center gap-5 text-center md:mb-16">
+        <ScrollReveal className="mx-auto mb-8 flex max-w-2xl flex-col items-center gap-5 text-center md:mb-10">
           <Badge variant="outline" className="rounded-full border-[var(--landing-border)] px-3 py-1 text-[var(--landing-fg)]">Core team</Badge>
           <h2 id="team-title" className="text-balance font-serif text-4xl leading-tight md:text-6xl"><ScrollText text="The people behind WQM." spread={3} /></h2>
           <p className="text-pretty text-base leading-relaxed text-[var(--landing-muted)]">Six people, bringing the boat, sensors and workspace together.</p>

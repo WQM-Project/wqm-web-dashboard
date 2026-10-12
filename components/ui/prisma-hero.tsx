@@ -1,12 +1,12 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import localFont from 'next/font/local';
 import { ArrowRight } from 'lucide-react';
 import { Header } from '@/components/ui/header-2';
 import { useLandingTheme } from '@/components/landing/landing-theme';
 import { ScrollText, ScrollReveal } from '@/components/ui/text-scroll-animation';
+import { HeroBackground } from '@/components/landing/hero-background';
 
 const googleSans = localFont({
   src: '../../public/fonts/google-sans/google-sans-medium.ttf',
@@ -21,7 +21,7 @@ export function PrismaHero() {
     <section id="boat-scene" aria-labelledby="landing-title" className="bg-[var(--landing-bg)] p-2 text-[var(--landing-fg)] md:p-4">
       <Header appearance="notch" />
       <div className="relative isolate flex min-h-[calc(100svh-1rem)] flex-col justify-end overflow-hidden rounded-2xl md:min-h-[calc(100svh-2rem)] md:rounded-[2rem]">
-        <Image src="/landing/river-team-clay-hero.png" alt="Clay miniature of friends testing a small RC boat beside a turquoise river, with mountains and soft clouds" fill priority sizes="100vw" className="-z-20 object-cover object-[65%_center] md:object-center" />
+        <HeroBackground />
         <div className="absolute inset-0 -z-10" style={{ background: theme === 'dark' ? 'linear-gradient(to bottom, rgba(0,0,0,.25), rgba(0,0,0,.1) 35%, rgba(0,0,0,.85))' : 'linear-gradient(to bottom, transparent 40%, rgba(248,248,244,.3) 70%, rgba(248,248,244,.75))' }} />
 
         <div className="grid grid-cols-12 items-end gap-x-8 gap-y-8 px-6 pb-8 pt-40 md:px-10 lg:pb-10">
@@ -37,7 +37,7 @@ export function PrismaHero() {
           <ScrollReveal
             className="col-span-12 flex max-w-md flex-col items-start gap-6 lg:col-span-4 lg:pb-2"
           >
-            <p className="text-pretty text-sm leading-relaxed text-[var(--landing-fg)] md:text-base">A student-built project for understanding our rivers. Bringing water-quality sensing, a boat and a LoRa link together—one reading at a time.</p>
+            <p className="text-pretty text-sm leading-relaxed text-[var(--landing-fg)] md:text-base">A remote-controlled boat for river water-quality monitoring, with onboard sensors, a LoRa link to shore, and a dashboard to explore measurements and trends.</p>
             <Link href="/dashboard" className="group inline-flex items-center gap-5 rounded-full bg-[var(--landing-button)] py-1 pl-5 pr-1 text-sm font-medium text-[var(--landing-button-text)] focus-visible:outline-2 focus-visible:outline-offset-4 md:text-base">
               Explore the readings
               <span className="flex size-10 items-center justify-center rounded-full bg-[var(--landing-button-text)] text-[var(--landing-button)]">
