@@ -16,6 +16,7 @@ import { SkyToggle } from '@/components/ui/sky-toggle';
 const links = [
   { label: 'Our project', href: '#boat-scene' },
   { label: 'Workspace', href: '#workspace-preview' },
+  { label: 'Features', href: '#features' },
   { label: 'Core team', href: '#core-team' },
   { label: 'Source code', href: 'https://github.com/WQM-Project' },
 ];
@@ -56,11 +57,11 @@ export function Header({ appearance = 'floating' }: { appearance?: 'floating' | 
           </a>
           <div className="ml-auto hidden items-center gap-1 md:flex">
             {links.map(link => (
-              <a key={link.label} href={link.href} className={buttonVariants({ variant: 'ghost', className: 'text-[var(--landing-fg)] hover:bg-black/5 dark:hover:bg-white/10' })}>
+              <a key={link.label} href={link.href} className={buttonVariants({ variant: 'ghost', className: 'text-[var(--landing-fg)] hover:bg-[var(--landing-border)] hover:text-[var(--landing-fg)] dark:hover:bg-[var(--landing-border)]' })}>
                 {link.label}
               </a>
             ))}
-            <Button asChild className="ml-3 bg-[var(--landing-button)] text-[var(--landing-button-text)] hover:opacity-90">
+            <Button asChild className="ml-3 bg-[var(--landing-button)] text-[var(--landing-button-text)] hover:bg-[var(--landing-button)] hover:text-[var(--landing-button-text)] hover:opacity-90">
               <Link href="/dashboard">Dashboard <ArrowUpRight aria-hidden="true" /></Link>
             </Button>
           </div>
@@ -68,7 +69,7 @@ export function Header({ appearance = 'floating' }: { appearance?: 'floating' | 
             <SkyToggle dark={theme === 'dark'} onChange={toggle} />
           </div>
           <Sheet open={open} onOpenChange={setOpen}>
-              <Button ref={menuButton} onClick={() => setOpen(true)} size="icon" variant="ghost" aria-label="Open navigation menu" aria-haspopup="dialog" aria-expanded={open} className="text-[var(--landing-fg)] hover:bg-black/5 md:hidden">
+              <Button ref={menuButton} onClick={() => setOpen(true)} size="icon" variant="ghost" aria-label="Open navigation menu" aria-haspopup="dialog" aria-expanded={open} className="text-[var(--landing-fg)] hover:bg-[var(--landing-border)] hover:text-[var(--landing-fg)] dark:hover:bg-[var(--landing-border)] md:hidden">
                 <MenuToggleIcon open={open} />
               </Button>
             <SheetContent data-theme={theme} side="right" onCloseAutoFocus={(event: Event) => { event.preventDefault(); menuButton.current?.focus(); }} className="wqm-landing w-full border-[var(--landing-border)] bg-[var(--landing-panel)] px-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-8 text-[var(--landing-fg)] sm:max-w-none data-[state=open]:duration-200 data-[state=closed]:duration-200 motion-reduce:animate-none">
@@ -76,12 +77,12 @@ export function Header({ appearance = 'floating' }: { appearance?: 'floating' | 
               <MenuDescription className="sr-only">Explore the project, monitoring workspace and source code.</MenuDescription>
               <nav aria-label="Mobile navigation" className="mt-10 flex flex-col gap-2">
                 {links.map(link => (
-                  <a key={link.label} href={link.href} onClick={() => setOpen(false)} className="rounded-md px-3 py-4 text-xl hover:bg-white/10 focus-visible:outline-2">
+                  <a key={link.label} href={link.href} onClick={() => setOpen(false)} className="rounded-md px-3 py-4 text-xl hover:bg-[var(--landing-border)] focus-visible:outline-2">
                     {link.label}
                   </a>
                 ))}
               </nav>
-              <Button asChild className="mt-auto bg-[var(--landing-button)] text-[var(--landing-button-text)] hover:opacity-90">
+              <Button asChild className="mt-auto bg-[var(--landing-button)] text-[var(--landing-button-text)] hover:bg-[var(--landing-button)] hover:text-[var(--landing-button-text)] hover:opacity-90">
                 <Link href="/dashboard" onClick={() => setOpen(false)}>Open dashboard <ArrowUpRight aria-hidden="true" /></Link>
               </Button>
             </SheetContent>
