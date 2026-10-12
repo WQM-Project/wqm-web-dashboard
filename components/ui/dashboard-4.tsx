@@ -8,7 +8,6 @@ import {
   ChevronRight,
   Database,
   Download,
-  Droplets,
   LayoutDashboard,
   Radio,
   RefreshCw,
@@ -36,6 +35,7 @@ import { PacketActivityChart } from "./dashboard-4-utils/packet-activity-chart";
 import { NodeSummary } from "./dashboard-4-utils/node-summary";
 import { QuickActions } from "./dashboard-4-utils/quick-actions";
 import { Panel } from "./dashboard-4-utils/shared";
+import { DashboardLogo } from './dashboard-4-utils/dashboard-logo';
 import { BoatMap } from "./dashboard-4-utils/boat-map";
 
 type View = "overview" | "readings" | "nodes";
@@ -276,9 +276,7 @@ export function Dashboard({
       <div className="mx-auto flex min-h-dvh max-w-[1800px]">
         <aside className="hidden w-56 shrink-0 flex-col border-r border-border bg-card px-4 py-7 md:flex">
           <Link href="/" className="mb-9 flex items-center gap-3 px-3">
-            <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <Droplets className="size-5" />
-            </span>
+            <DashboardLogo theme={theme} size={48} />
             <span className="text-lg font-semibold">
               WQM
               <span className="block text-[10px] font-normal text-muted-foreground">
@@ -337,9 +335,7 @@ export function Dashboard({
             </p>
           </div>
           <div className="mt-5 flex items-center gap-2 px-2">
-            <span className="flex size-8 items-center justify-center rounded-full bg-muted text-[10px] font-medium">
-              WQ
-            </span>
+            <DashboardLogo theme={theme} size={32} decorative />
             <div className="text-xs">
               <p className="font-medium">WQM Project</p>
               <p className="mt-0.5 text-[10px] text-muted-foreground">
@@ -353,9 +349,10 @@ export function Dashboard({
             <div className="flex items-center gap-2 text-xs">
               <Link
                 href="/"
-                className="font-semibold md:font-normal md:text-muted-foreground"
+                className="flex items-center gap-2 font-semibold md:font-normal md:text-muted-foreground"
               >
-                WQM
+                <DashboardLogo theme={theme} size={28} />
+                <span className="md:hidden">WQM</span>
               </Link>
               <ChevronRight className="size-3 text-muted-foreground" />
               <span className="capitalize">{view}</span>
