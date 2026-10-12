@@ -2,10 +2,18 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import localFont from 'next/font/local';
 import { ArrowRight } from 'lucide-react';
 import { Header } from '@/components/ui/header-2';
 import { useLandingTheme } from '@/components/landing/landing-theme';
 import { ScrollText, ScrollReveal } from '@/components/ui/text-scroll-animation';
+
+const googleSans = localFont({
+  src: '../../public/fonts/google-sans/google-sans-medium.ttf',
+  weight: '500',
+  style: 'normal',
+  display: 'swap',
+});
 
 export function PrismaHero() {
   const { theme } = useLandingTheme();
@@ -22,7 +30,7 @@ export function PrismaHero() {
               <h1 id="landing-title" className="text-center text-balance text-[28vw] font-semibold leading-[0.85] tracking-[-0.075em] lg:text-[17.5vw]">
                 <ScrollText text="WQM" spread={24} />
               </h1>
-              <p className="relative left-[1.2vw] mt-2 whitespace-nowrap text-center font-serif text-[5.4vw] font-normal italic leading-tight tracking-tight lg:left-[0.8vw] lg:mt-3 lg:text-[3.4vw]">Water Quality Monitoring</p>
+              <p className={`${googleSans.className} relative left-[1.2vw] mt-2 whitespace-nowrap text-center text-[5.4vw] font-medium leading-tight tracking-tight lg:left-[0.8vw] lg:mt-3 lg:text-[3.4vw]`}>&ensp;   Water Quality Monitoring</p>
             </div>
           </div>
 

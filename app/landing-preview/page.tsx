@@ -2,6 +2,7 @@ import { PrismaHero } from '@/components/ui/prisma-hero';
 import { WorkspacePreview } from '@/components/landing/workspace-preview';
 import { LandingThemeProvider } from '@/components/landing/landing-theme';
 import { SmoothScroll } from '@/components/landing/smooth-scroll';
+import CoreTeam from '@/components/ui/team-01';
 import { cookies } from 'next/headers';
 import './landing.css';
 
@@ -13,6 +14,7 @@ export default async function LandingPreview() {
     <main>
       <PrismaHero />
       <WorkspacePreview />
+      <CoreTeam />
     </main>
     </SmoothScroll>
     </LandingThemeProvider>
