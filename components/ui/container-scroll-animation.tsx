@@ -24,7 +24,7 @@ export function ContainerScroll({ titleComponent, children }: {
     return () => screen.removeEventListener('change', update);
   }, []);
 
-  const rotate = useTransform(scrollYProgress, [0, 1], [20, 0]);
+  const rotate = useTransform(scrollYProgress, [0, 1], [mobile ? 24 : 32, 0]);
   const scale = useTransform(scrollYProgress, [0, 1], mobile ? [0.9, 1] : [1.05, 1]);
   const translate = useTransform(scrollYProgress, [0, 1], [40, 0]);
 
@@ -35,9 +35,9 @@ export function ContainerScroll({ titleComponent, children }: {
       </motion.div>
       <motion.div
         style={{ rotateX: reducedMotion ? 0 : rotate, scale: reducedMotion ? 1 : scale }}
-        className="mx-auto aspect-video w-full max-w-6xl rounded-2xl border-2 border-[var(--landing-border)] bg-[var(--landing-panel)] p-1.5 shadow-2xl md:rounded-3xl md:p-3"
+        className="mx-auto w-full max-w-6xl overflow-hidden rounded-3xl border border-[var(--landing-border)] bg-[var(--landing-panel)] p-2 shadow-xl md:rounded-[2rem] md:p-3"
       >
-        <div className="relative size-full overflow-hidden rounded-xl bg-[var(--landing-panel)] md:rounded-2xl">
+        <div className="relative w-full overflow-hidden rounded-2xl bg-[var(--landing-panel)] md:rounded-[1.25rem]">
           {children}
         </div>
       </motion.div>

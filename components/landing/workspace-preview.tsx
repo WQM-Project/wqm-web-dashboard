@@ -17,7 +17,15 @@ export function WorkspacePreview() {
           <p className="mx-auto mt-6 max-w-xl text-pretty text-base leading-relaxed text-[var(--landing-muted)]">Explore Boat 01’s water-quality readings, trends and location in one workspace.</p>
         </>
       }>
-        <Image src={theme === 'dark' ? '/landing/dashboard-snapshot.jpg' : '/landing/dashboard-snapshot-light.jpg'} alt="WQM dashboard showing Boat 01’s pH, turbidity, dissolved oxygen, water temperature and measurement trends" fill sizes="(max-width: 768px) 100vw, 1152px" className="object-contain" draggable={false} />
+        <Image
+          src={theme === 'dark' ? '/landing/dashboard-snapshot-dark-hd.webp' : '/landing/dashboard-snapshot-light-hd.webp'}
+          alt="WQM dashboard showing Boat 01’s stored water-quality readings and measurement charts"
+          width={2057}
+          height={1157}
+          sizes="(max-width: 768px) 100vw, 1152px"
+          className="block h-auto w-full"
+          draggable={false}
+        />
       </ContainerScroll>
       <div className="mx-auto -mt-12 flex max-w-6xl flex-col items-center gap-5 px-6 pb-24 md:-mt-20">
         <p className="text-xs text-[var(--landing-muted)]">Dashboard overview · stored readings</p>

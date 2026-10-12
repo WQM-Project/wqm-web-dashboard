@@ -44,7 +44,7 @@ export function PrismaHero() {
     <section id="boat-scene" aria-labelledby="landing-title" className="bg-[var(--landing-bg)] p-2 text-[var(--landing-fg)] md:p-4">
       <Header appearance="notch" />
       <div className="relative isolate flex min-h-[calc(100svh-1rem)] flex-col justify-end overflow-hidden rounded-2xl md:min-h-[calc(100svh-2rem)] md:rounded-[2rem]">
-        <Image src="/landing/river-art-hero.png" alt="Artistic mountain valley with a winding turquoise river, trees and soft clouds" fill priority sizes="100vw" className="-z-20 object-cover object-[65%_center] md:object-center" />
+        <Image src="/landing/river-team-clay-hero.png" alt="Clay miniature of friends testing a small RC boat beside a turquoise river, with mountains and soft clouds" fill priority sizes="100vw" className="-z-20 object-cover object-[65%_center] md:object-center" />
         <div className="absolute inset-0 -z-10" style={{ background: theme === 'dark' ? 'linear-gradient(to bottom, rgba(0,0,0,.25), rgba(0,0,0,.1) 35%, rgba(0,0,0,.85))' : 'linear-gradient(to bottom, rgba(248,248,244,.05), rgba(248,248,244,.12) 30%, rgba(248,248,244,.96))' }} />
 
         <div className="grid grid-cols-12 items-end gap-x-8 gap-y-8 px-6 pb-8 pt-40 md:px-10 lg:pb-10">
