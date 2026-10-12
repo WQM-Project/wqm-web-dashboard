@@ -1,5 +1,11 @@
-import { RiverHero } from '@/components/landing/river-hero';
+import { PrismaHero } from '@/components/ui/prisma-hero';
+import { WorkspacePreview } from '@/components/landing/workspace-preview';
 
 export default function LandingPreview() {
-  return <RiverHero />;
+  return (
+    <main>
+      <PrismaHero />
+      <WorkspacePreview />
+    </main>
+  );
 }

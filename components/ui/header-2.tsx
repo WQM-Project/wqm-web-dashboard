@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 
 const links = [
   { label: 'The boat', href: '#boat-scene' },
-  { label: 'Readings', href: '/dashboard' },
+  { label: 'Workspace', href: '#workspace-preview' },
   { label: 'Source code', href: 'https://github.com/WQM-Project' },
 ];
 
@@ -21,7 +21,7 @@ const MenuTitle = SheetTitle as ComponentType<{ className: string; children: Rea
 
 const MenuDescription = SheetDescription as ComponentType<{ className: string; children: ReactNode }>;
 
-export function Header() {
+export function Header({ appearance = 'floating' }: { appearance?: 'floating' | 'notch' }) {
   const [open, setOpen] = useState(false);
   const scrolled = useScroll(10);
   const menuButton = useRef<HTMLButtonElement>(null);
@@ -36,21 +36,22 @@ export function Header() {
   }, []);
 
   return (
-    <header className="fixed inset-x-0 top-[max(1rem,env(safe-area-inset-top))] z-40 px-4 text-white">
+    <header className={cn('fixed inset-x-0 z-40 px-4 text-white', appearance === 'notch' && !scrolled ? 'top-[max(0.5rem,env(safe-area-inset-top))] md:top-4' : 'top-[max(1rem,env(safe-area-inset-top))]')}>
       <div className={cn(
         'mx-auto w-full max-w-5xl rounded-md border border-transparent',
+        appearance === 'notch' && !scrolled && 'max-w-4xl rounded-t-none rounded-b-3xl bg-stone-950',
         scrolled && 'max-w-4xl border-white/15 bg-stone-950/90 shadow-md',
       )}>
         <nav aria-label="Main navigation" className="flex h-16 items-center justify-between gap-4 px-4 md:h-14">
-          <Link href="/landing-preview" aria-label="WQM home" className="flex items-center gap-2 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4">
+          <a href="#boat-scene" aria-label="WQM home" className="flex items-center gap-2 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4">
             <Image src="/branding/wqm-logo-with-background.png" alt="" width={32} height={32} className="rounded-full" />
             <span className="font-semibold">WQM</span>
-          </Link>
+          </a>
           <div className="hidden items-center gap-1 md:flex">
             {links.map(link => (
-              <Link key={link.label} href={link.href} className={buttonVariants({ variant: 'ghost', className: 'text-white/90 hover:bg-white/10 hover:text-white' })}>
+              <a key={link.label} href={link.href} className={buttonVariants({ variant: 'ghost', className: 'text-white/90 hover:bg-white/10 hover:text-white' })}>
                 {link.label}
-              </Link>
+              </a>
             ))}
             <Button asChild className="ml-3 bg-white text-stone-950 hover:bg-white/90">
               <Link href="/dashboard">Dashboard <ArrowUpRight aria-hidden="true" /></Link>
@@ -65,9 +66,9 @@ export function Header() {
               <MenuDescription className="sr-only">Explore the boat, readings and project source code.</MenuDescription>
               <nav aria-label="Mobile navigation" className="mt-10 flex flex-col gap-2">
                 {links.map(link => (
-                  <Link key={link.label} href={link.href} onClick={() => setOpen(false)} className="rounded-md px-3 py-4 text-xl hover:bg-white/10 focus-visible:outline-2">
+                  <a key={link.label} href={link.href} onClick={() => setOpen(false)} className="rounded-md px-3 py-4 text-xl hover:bg-white/10 focus-visible:outline-2">
                     {link.label}
-                  </Link>
+                  </a>
                 ))}
               </nav>
               <Button asChild className="mt-auto bg-white text-stone-950 hover:bg-white/90">
@@ -80,5 +81,3 @@ export function Header() {
     </header>
   );
 }
-
-

@@ -27,7 +27,7 @@ export function RiverHero() {
   const detailY = useTransform(scrollYProgress, [0.6, 0.8], [24, 0]);
 
   return (
-    <main className="bg-stone-950 text-white">
+    <div className="bg-stone-950 text-white">
       <Header />
       <section ref={heroRef} className="relative h-[280svh] motion-reduce:h-dvh" aria-labelledby="river-title">
         <span id="boat-scene" className="absolute top-[180svh] motion-reduce:top-0" aria-hidden="true" />
@@ -64,6 +64,6 @@ export function RiverHero() {
           </div>
         </div>
       </section>
-    </main>
+    </div>
   );
 }
