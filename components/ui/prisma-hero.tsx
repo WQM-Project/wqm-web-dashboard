@@ -8,6 +8,7 @@ import { motion, useInView, useReducedMotion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import { Header } from '@/components/ui/header-2';
 import { cn } from '@/lib/utils';
+import { useLandingTheme } from '@/components/landing/landing-theme';
 
 export function WordsPullUp({ text, className, style }: {
   text: string;
@@ -38,12 +39,13 @@ export function WordsPullUp({ text, className, style }: {
 }
 
 export function PrismaHero() {
+  const { theme } = useLandingTheme();
   return (
-    <section id="boat-scene" aria-labelledby="landing-title" className="bg-stone-950 p-2 text-[#E1E0CC] md:p-4">
+    <section id="boat-scene" aria-labelledby="landing-title" className="bg-[var(--landing-bg)] p-2 text-[var(--landing-fg)] md:p-4">
       <Header appearance="notch" />
       <div className="relative isolate flex min-h-[calc(100svh-1rem)] flex-col justify-end overflow-hidden rounded-2xl md:min-h-[calc(100svh-2rem)] md:rounded-[2rem]">
-        <Image src="/landing/sensor-boat.png" alt="Sensor boat on a mountain river" fill priority sizes="100vw" className="-z-20 object-cover object-[65%_center] md:object-center" />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-black/25 via-black/10 to-black/85" />
+        <Image src="/landing/river-art-hero.png" alt="Artistic mountain valley with a winding turquoise river, trees and soft clouds" fill priority sizes="100vw" className="-z-20 object-cover object-[65%_center] md:object-center" />
+        <div className="absolute inset-0 -z-10" style={{ background: theme === 'dark' ? 'linear-gradient(to bottom, rgba(0,0,0,.25), rgba(0,0,0,.1) 35%, rgba(0,0,0,.85))' : 'linear-gradient(to bottom, rgba(248,248,244,.05), rgba(248,248,244,.12) 30%, rgba(248,248,244,.96))' }} />
 
         <div className="grid grid-cols-12 items-end gap-x-8 gap-y-8 px-6 pb-8 pt-40 md:px-10 lg:pb-10">
           <div className="col-span-12 lg:col-span-8">
@@ -56,10 +58,10 @@ export function PrismaHero() {
           <div
             className="col-span-12 flex max-w-md flex-col items-start gap-6 lg:col-span-4 lg:pb-2"
           >
-            <p className="text-pretty text-sm leading-relaxed text-[#E1E0CC]/90 md:text-base">A student-built boat for understanding our rivers. Water-quality sensors on board, a LoRa link to shore, and a workspace that brings the readings into view.</p>
-            <Link href="/dashboard" className="group inline-flex items-center gap-5 rounded-full bg-[#E1E0CC] py-1 pl-5 pr-1 text-sm font-medium text-stone-950 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#E1E0CC] md:text-base">
+            <p className="text-pretty text-sm leading-relaxed text-[var(--landing-fg)] md:text-base">A student-built project for understanding our rivers. Bringing water-quality sensing, a boat and a LoRa link together—one reading at a time.</p>
+            <Link href="/dashboard" className="group inline-flex items-center gap-5 rounded-full bg-[var(--landing-button)] py-1 pl-5 pr-1 text-sm font-medium text-[var(--landing-button-text)] focus-visible:outline-2 focus-visible:outline-offset-4 md:text-base">
               Explore the readings
-              <span className="flex size-10 items-center justify-center rounded-full bg-stone-950 text-[#E1E0CC]">
+              <span className="flex size-10 items-center justify-center rounded-full bg-[var(--landing-button-text)] text-[var(--landing-button)]">
                 <ArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transition-none" aria-hidden="true" />
               </span>
             </Link>

@@ -1,0 +1,24 @@
+.wqm-landing {
+  --landing-bg: #f8f8f4;
+  --landing-fg: #1c2520;
+  --landing-muted: #59635c;
+  --landing-panel: #ffffff;
+  --landing-border: #d8ded8;
+  --landing-button: #1c2520;
+  --landing-button-text: #ffffff;
+  min-height: 100dvh;
+  background: var(--landing-bg);
+  color: var(--landing-fg);
+  color-scheme: light;
+}
+
+.wqm-landing[data-theme='dark'] {
+  --landing-bg: #0c0f0d;
+  --landing-fg: #e1e0cc;
+  --landing-muted: #b3b8ac;
+  --landing-panel: #181d19;
+  --landing-border: #394139;
+  --landing-button: #e1e0cc;
+  --landing-button-text: #121612;
+  color-scheme: dark;
+}

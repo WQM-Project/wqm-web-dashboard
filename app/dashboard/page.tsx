@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "WQM — Monitoring workspace" };
 export default async function DashboardPage() {
   const initialTheme =
-    (await cookies()).get("wqm-dashboard-theme")?.value === "dark"
+    (await cookies()).get("wqm-theme")?.value === "dark"
       ? "dark"
       : "light";
   try {

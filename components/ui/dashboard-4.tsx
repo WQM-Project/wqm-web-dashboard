@@ -171,7 +171,7 @@ export function Dashboard({
   const [theme, setTheme] = useState<"light" | "dark">(initialTheme);
   useEffect(() => {
     try {
-      const saved = localStorage.getItem("wqm-dashboard-theme");
+      const saved = localStorage.getItem("wqm-theme");
       if (saved === "light" || saved === "dark") setTheme(saved);
     } catch {
       /* The server-rendered cookie preference remains available. */
@@ -181,11 +181,11 @@ export function Dashboard({
     const next = theme === "light" ? "dark" : "light";
     setTheme(next);
     try {
-      localStorage.setItem("wqm-dashboard-theme", next);
+      localStorage.setItem("wqm-theme", next);
     } catch {
       /* Cookie still persists the preference. */
     }
-    document.cookie = `wqm-dashboard-theme=${next};Path=/dashboard;Max-Age=31536000;SameSite=Lax${location.protocol === "https:" ? ";Secure" : ""}`;
+    document.cookie = `wqm-theme=${next};Path=/;Max-Age=31536000;SameSite=Lax${location.protocol === "https:" ? ";Secure" : ""}`;
   }
   const [data, setData] = useState(initialData);
   const [source, setSource] = useState<"demo" | "gateway">("demo");

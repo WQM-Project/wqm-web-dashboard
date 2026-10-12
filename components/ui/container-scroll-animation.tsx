@@ -35,9 +35,9 @@ export function ContainerScroll({ titleComponent, children }: {
       </motion.div>
       <motion.div
         style={{ rotateX: reducedMotion ? 0 : rotate, scale: reducedMotion ? 1 : scale }}
-        className="mx-auto aspect-video w-full max-w-6xl rounded-2xl border-2 border-stone-600 bg-stone-900 p-1.5 shadow-2xl md:rounded-3xl md:p-3"
+        className="mx-auto aspect-video w-full max-w-6xl rounded-2xl border-2 border-[var(--landing-border)] bg-[var(--landing-panel)] p-1.5 shadow-2xl md:rounded-3xl md:p-3"
       >
-        <div className="relative size-full overflow-hidden rounded-xl bg-stone-950 md:rounded-2xl">
+        <div className="relative size-full overflow-hidden rounded-xl bg-[var(--landing-panel)] md:rounded-2xl">
           {children}
         </div>
       </motion.div>
