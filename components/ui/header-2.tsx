@@ -57,7 +57,7 @@ export function Header({ appearance = 'floating' }: { appearance?: 'floating' | 
           </a>
           <div className="ml-auto hidden items-center gap-1 md:flex">
             {links.map(link => (
-              <a key={link.label} href={link.href} className={buttonVariants({ variant: 'ghost', className: 'text-[var(--landing-fg)] hover:bg-[var(--landing-border)] hover:text-[var(--landing-fg)] dark:hover:bg-[var(--landing-border)]' })}>
+              <a key={link.label} href={link.href} className={buttonVariants({ variant: 'ghost', className: 'text-[var(--landing-fg)] hover:bg-[var(--landing-border)]! hover:text-[var(--landing-fg)]! dark:hover:bg-[var(--landing-border)]!' })}>
                 {link.label}
               </a>
             ))}
@@ -69,7 +69,7 @@ export function Header({ appearance = 'floating' }: { appearance?: 'floating' | 
             <SkyToggle dark={theme === 'dark'} onChange={toggle} />
           </div>
           <Sheet open={open} onOpenChange={setOpen}>
-              <Button ref={menuButton} onClick={() => setOpen(true)} size="icon" variant="ghost" aria-label="Open navigation menu" aria-haspopup="dialog" aria-expanded={open} className="text-[var(--landing-fg)] hover:bg-[var(--landing-border)] hover:text-[var(--landing-fg)] dark:hover:bg-[var(--landing-border)] md:hidden">
+              <Button ref={menuButton} onClick={() => setOpen(true)} size="icon" variant="ghost" aria-label="Open navigation menu" aria-haspopup="dialog" aria-expanded={open} className="text-[var(--landing-fg)] hover:bg-[var(--landing-border)]! hover:text-[var(--landing-fg)]! dark:hover:bg-[var(--landing-border)]! md:hidden">
                 <MenuToggleIcon open={open} />
               </Button>
             <SheetContent data-theme={theme} side="right" onCloseAutoFocus={(event: Event) => { event.preventDefault(); menuButton.current?.focus(); }} className="wqm-landing w-full border-[var(--landing-border)] bg-[var(--landing-panel)] px-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-8 text-[var(--landing-fg)] sm:max-w-none data-[state=open]:duration-200 data-[state=closed]:duration-200 motion-reduce:animate-none">

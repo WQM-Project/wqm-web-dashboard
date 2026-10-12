@@ -13,7 +13,7 @@ export default function CoreTeam() {
         <ScrollReveal className="mx-auto mb-12 flex max-w-2xl flex-col items-center gap-5 text-center md:mb-16">
           <Badge variant="outline" className="rounded-full border-[var(--landing-border)] px-3 py-1 text-[var(--landing-fg)]">Core team</Badge>
           <h2 id="team-title" className="text-balance font-serif text-4xl leading-tight md:text-6xl"><ScrollText text="The people behind WQM." spread={3} /></h2>
-          <p className="text-pretty text-base leading-relaxed text-[var(--landing-muted)]">Seven people, bringing the boat, sensors and workspace together.</p>
+          <p className="text-pretty text-base leading-relaxed text-[var(--landing-muted)]">Six people, bringing the boat, sensors and workspace together.</p>
         </ScrollReveal>
 
         <div className="flex flex-wrap justify-center gap-x-6 gap-y-12">
