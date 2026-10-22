@@ -4,8 +4,11 @@ import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 import { useReducedMotion } from 'framer-motion';
 import { Pause, Play } from 'lucide-react';
+import { useLandingTheme } from '@/components/landing/landing-theme';
 
 export function HeroBackground() {
+  const { theme } = useLandingTheme();
+  const dark = theme === 'dark';
   const video = useRef<HTMLVideoElement>(null);
   const reducedMotion = useReducedMotion();
   const [ready, setReady] = useState(false);
@@ -14,6 +17,7 @@ export function HeroBackground() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
+  useEffect(() => { setReady(false); setPlaying(false); setFailed(false); }, [dark]);
 
   function togglePlayback() {
     if (!video.current) return;
@@ -27,13 +31,13 @@ export function HeroBackground() {
   return (
     <>
       <div className="absolute inset-0 -z-20">
-        <Image src="/landing/river-team-clay-hero.png" alt="Clay miniature of friends testing a small RC boat beside a turquoise river, with mountains and soft clouds" fill priority sizes="100vw" className="object-cover object-[65%_center] md:object-center" />
+        <Image src={dark ? '/landing/river-team-clay-hero-dark.png' : '/landing/river-team-clay-hero.png'} alt="Clay miniature of friends testing a small RC boat beside a turquoise river, with mountains and soft clouds" fill priority sizes="100vw" className="object-cover object-[65%_center] md:object-center" />
         {mounted && reducedMotion === false && !failed && (
-          <video ref={video} autoPlay loop muted playsInline preload="metadata" aria-hidden="true"
+          <video key={dark ? 'dark' : 'light'} ref={video} autoPlay loop muted playsInline preload="metadata" aria-hidden="true"
             className={`absolute inset-0 size-full object-cover object-[65%_center] transition-opacity duration-500 md:object-center ${ready ? 'opacity-100' : 'opacity-0'}`}
             onPlaying={() => { setReady(true); setPlaying(true); }} onPlay={() => setPlaying(true)}
             onPause={() => setPlaying(false)} onError={() => setFailed(true)}>
-            <source src="/landing/river-team-hero-loop-hq.mp4" type="video/mp4" />
+            <source src={dark ? '/landing/river-team-hero-loop-dark.mp4' : '/landing/river-team-hero-loop-hq.mp4'} type="video/mp4" />
           </video>
         )}
       </div>

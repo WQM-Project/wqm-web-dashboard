@@ -62,7 +62,7 @@ export function ScrollReveal({ children, className }: { children: ReactNode; cla
   const reducedMotion = useReducedMotion();
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start 95%', 'start 65%'] });
   const y = useTransform(scrollYProgress, [0, 1], [28, 0]);
-  const opacity = useTransform(scrollYProgress, [0, 1], [0.6, 1]);
+  const opacity = useTransform(scrollYProgress, [0, 1], [1, 1]);
 
   return <motion.div ref={ref} className={className} style={{ y: reducedMotion ? 0 : y, opacity: reducedMotion ? 1 : opacity }}>{children}</motion.div>;
 }

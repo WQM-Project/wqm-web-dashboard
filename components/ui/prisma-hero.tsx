@@ -35,11 +35,10 @@ export function PrismaHero() {
           </div>
 
           <ScrollReveal
-            className="col-span-12 flex max-w-md flex-col items-start gap-6 lg:col-span-4 lg:pb-2"
+            className="col-span-12 flex max-w-md flex-col items-start gap-6 lg:col-span-4 lg:ml-auto lg:mr-[6vw] lg:items-end lg:pb-10"
           >
-            <p className="text-pretty text-sm leading-relaxed text-[var(--landing-fg)] md:text-base">A remote-controlled boat for river water-quality monitoring, with onboard sensors, a LoRa link to shore, and a dashboard to explore measurements and trends.</p>
             <Link href="/dashboard" className="group inline-flex items-center gap-5 rounded-full bg-[var(--landing-button)] py-1 pl-5 pr-1 text-sm font-medium text-[var(--landing-button-text)] focus-visible:outline-2 focus-visible:outline-offset-4 md:text-base">
-              Explore the readings
+              Open live dashboard
               <span className="flex size-10 items-center justify-center rounded-full bg-[var(--landing-button-text)] text-[var(--landing-button)]">
                 <ArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transition-none" aria-hidden="true" />
               </span>

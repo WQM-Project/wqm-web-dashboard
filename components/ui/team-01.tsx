@@ -1,10 +1,26 @@
 'use client';
 
 import Image from 'next/image';
+import type { PointerEvent } from 'react';
 import { Globe, Linkedin, UserRound } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { ScrollReveal, ScrollText } from '@/components/ui/text-scroll-animation';
 import { coreTeam } from '@/components/landing/team-data';
+
+function pan(e: PointerEvent<HTMLDivElement>) {
+  const box = e.currentTarget.getBoundingClientRect();
+  const x = (e.clientX - box.left) / box.width - 0.5;
+  const y = (e.clientY - box.top) / box.height - 0.5;
+  e.currentTarget.style.setProperty('--pan-x', `${(-x * 7).toFixed(2)}%`);
+  e.currentTarget.style.setProperty('--pan-y', `${(-y * 7).toFixed(2)}%`);
+  e.currentTarget.style.setProperty('--zoom', '1.15');
+}
+
+function resetPan(e: PointerEvent<HTMLDivElement>) {
+  e.currentTarget.style.setProperty('--pan-x', '0%');
+  e.currentTarget.style.setProperty('--pan-y', '0%');
+  e.currentTarget.style.setProperty('--zoom', '1');
+}
 
 export default function CoreTeam() {
   return (
@@ -20,11 +36,11 @@ export default function CoreTeam() {
           {coreTeam.map((member) => {
             const name = member.name || `Team member ${member.id}`;
             return (
-              <ScrollReveal key={member.id} className="group w-full sm:w-[calc(50%-12px)] lg:w-[calc(25%-18px)]">
+              <ScrollReveal key={member.id} className="group w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)]">
                 <article className="flex flex-col items-center gap-5">
-                  <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl border border-[var(--landing-border)] bg-[var(--landing-panel)]">
+                  <div onPointerMove={pan} onPointerLeave={resetPan} className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl rounded-br-[4rem] rounded-tl-[4rem] border border-[var(--landing-border)] bg-[var(--landing-panel)] transition-[border-radius] duration-500 ease-out group-hover:rounded-2xl group-hover:rounded-bl-[4rem] group-hover:rounded-tr-[4rem] motion-reduce:transition-none">
                     {member.image ? (
-                      <Image src={member.image} alt={name} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 280px" className="object-cover transition-[filter] duration-300 group-hover:grayscale motion-reduce:transition-none" />
+                      <Image src={member.image} alt={name} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 280px" className="object-cover transition-transform duration-300 ease-out motion-reduce:transition-none" style={{ transform: 'translate(var(--pan-x, 0%), var(--pan-y, 0%)) scale(var(--zoom, 1))' }} />
                     ) : (
                       <div className="flex h-full flex-col items-center justify-center gap-4 text-[var(--landing-muted)]">
                         <UserRound className="size-16 stroke-1 opacity-40" aria-hidden="true" />
