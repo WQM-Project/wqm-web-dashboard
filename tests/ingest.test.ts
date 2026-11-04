@@ -52,6 +52,15 @@ test('rejects bad input before storage', async () => {
   assert.equal(writes, 0)
   assert.equal(packetSchema.safeParse({ ...packet, pH: Infinity }).success, false)
 })
+test('accepts gateway GPS fields and rejects inconsistent ones', () => {
+  const located = { ...packet, lat: 31.78102, lon: 76.99731, gps_fix: true, gps_age_s: 2 }
+  assert.equal(packetSchema.safeParse(located).success, true)
+  assert.equal(packetSchema.safeParse({ ...packet, gps_fix: false }).success, true)
+  assert.equal(packetSchema.safeParse({ ...located, lat: 91 }).success, false)
+  assert.equal(packetSchema.safeParse({ ...located, lon: undefined }).success, false)
+  assert.equal(packetSchema.safeParse({ ...packet, gps_fix: true }).success, false)
+  assert.equal(packetSchema.safeParse({ ...located, gps_age_s: 1.5 }).success, false)
+})
 test('fails closed without configuration and never acknowledges failed storage', async () => {
   const handler = createIngestHandler({ key, allowedNodes: ['WQM-001'], save: async () => { throw new Error('secret database detail') } })
   const response = await handler(request())

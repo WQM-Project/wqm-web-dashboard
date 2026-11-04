@@ -37,6 +37,7 @@ import { QuickActions } from "./dashboard-4-utils/quick-actions";
 import { Panel } from "./dashboard-4-utils/shared";
 import { DashboardLogo } from './dashboard-4-utils/dashboard-logo';
 import { BoatMap } from "./dashboard-4-utils/boat-map";
+import { latestBoatPosition } from "@/lib/map-config";
 
 type View = "overview" | "readings" | "nodes";
 const navigation = [
@@ -237,6 +238,8 @@ export function Dashboard({
   const readings = windowRows.filter((row) => row.device_id === selectedNode);
   const latest = readings.at(-1);
   const demo = source === "demo";
+  // Whole history, not just the time window, so a quiet hour keeps the last fix.
+  const position = latestBoatPosition(all.filter((row) => row.device_id === selectedNode));
   function exportCsv() {
     const header = [
       "packet_id",
@@ -528,7 +531,7 @@ export function Dashboard({
                       onMetricChange={setMetric}
                     />
                     <DissolvedSolidsChart readings={readings} />
-                    <BoatMap demo={demo} theme={theme} />
+                    <BoatMap demo={demo} position={position} theme={theme} />
                     <PacketActivityChart readings={readings} />
                     <NodeSummary readings={windowRows} />
                     <QuickActions

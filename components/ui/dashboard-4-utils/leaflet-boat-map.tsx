@@ -9,6 +9,7 @@ import {
   CAMPUS_REFERENCE,
   DEMO_BOAT_LOCATION,
   validPosition,
+  fixAgeNote,
 } from "@/lib/map-config";
 import type { BoatPosition } from "@/lib/map-config";
 import { dateLabel } from "@/lib/dashboard";
@@ -189,7 +190,7 @@ export function LeafletBoatMap({
           {demo
             ? "North Campus location reference."
             : hasGps
-              ? `Last GPS fix: ${dateLabel(position.recordedAt)} IST. This does not indicate a live connection.`
+              ? `Last GPS packet: ${dateLabel(position.recordedAt)} IST. This does not indicate a live connection.${fixAgeNote(position)}`
               : "The gateway packet has no GPS fields yet. Only the campus reference is shown; no real boat location is claimed."}
         </p>
         <a

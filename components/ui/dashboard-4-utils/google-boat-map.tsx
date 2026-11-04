@@ -8,6 +8,7 @@ import {
   CAMPUS_REFERENCE,
   DEMO_BOAT_LOCATION,
   validPosition,
+  fixAgeNote,
 } from "@/lib/map-config";
 import type { BoatPosition } from "@/lib/map-config";
 import { dateLabel } from "@/lib/dashboard";
@@ -318,7 +319,7 @@ export function GoogleBoatMap({
       <div className="mt-3 flex flex-wrap justify-between gap-3 text-xs text-muted-foreground">
         <p className="max-w-2xl leading-5">
           {hasGps && position
-            ? `Last GPS fix: ${dateLabel(position.recordedAt)} IST.`
+            ? `Last GPS packet: ${dateLabel(position.recordedAt)} IST.${fixAgeNote(position)}`
             : "North Campus location reference. GPS pending."}
         </p>
         <a

@@ -9,7 +9,17 @@ export const packetSchema = z.object({
   do_mgl: measurement, ec_uscm: measurement, orp_mv: measurement,
   temp_w1: measurement, temp_w2: measurement, depth_cm: measurement,
   temp_air: measurement, humidity: measurement, pressure_hpa: measurement,
-}).strict()
+  // Added by the gateway from the SIM7600 GNSS. Absent until the first fix.
+  lat: z.number().finite().min(-90).max(90).optional(),
+  lon: z.number().finite().min(-180).max(180).optional(),
+  gps_fix: z.boolean().optional(),
+  gps_age_s: z.number().int().min(0).max(4294967295).optional(),
+}).strict().superRefine((packet, context) => {
+  if ((packet.lat === undefined) !== (packet.lon === undefined))
+    context.addIssue({ code: 'custom', path: ['lon'], message: 'lat and lon must be sent together' })
+  if (packet.gps_fix && packet.lat === undefined)
+    context.addIssue({ code: 'custom', path: ['lat'], message: 'gps_fix requires lat and lon' })
+})
 export type Packet = z.infer<typeof packetSchema>
 export type SavePacket = (packetId: string, packet: Packet) => Promise<boolean>
 export class PacketConflict extends Error {}
