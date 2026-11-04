@@ -37,6 +37,7 @@ import { QuickActions } from "./dashboard-4-utils/quick-actions";
 import { Panel } from "./dashboard-4-utils/shared";
 import { DashboardLogo } from './dashboard-4-utils/dashboard-logo';
 import { BoatMap } from "./dashboard-4-utils/boat-map";
+import { PacketId } from "./dashboard-4-utils/packet-id";
 import { latestBoatPosition } from "@/lib/map-config";
 
 type View = "overview" | "readings" | "nodes";
@@ -659,10 +660,13 @@ export function Dashboard({
             <DialogTitle>Stored packet</DialogTitle>
             <p
               id="packet-description"
-              className="break-all text-xs text-muted-foreground"
+              className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground"
             >
-              {inspected?.packet_id} ·{" "}
-              {inspected ? dateLabel(inspected.recorded_at) + " IST" : ""}
+              {inspected && <PacketId id={inspected.packet_id} />}
+              <span>
+                Received{" "}
+                {inspected ? dateLabel(inspected.recorded_at) + " IST" : ""}
+              </span>
             </p>
           </DialogHeader>
           <p className="text-xs text-muted-foreground">
