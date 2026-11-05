@@ -7,7 +7,7 @@
 This repo owns everything a human sees or is alerted by. It ingests telemetry relayed from the [`gateway`](https://github.com/WQM-Project/gateway), persists it, renders it as live geospatial and time-series visualisations, surfaces predictions from [`water-quality-ml`](https://github.com/WQM-Project/water-quality-ml), and dispatches threshold-breach alerts to local authorities.
 
 > [!NOTE]
-> **Current local status (12 October 2026):** `/dashboard` is implemented with measurement cards, selectable trends, dissolved-solids trend, packet activity, a single-boat view, a Leaflet map near IIT Mandi North Campus, packet inspection and CSV export. It reads an isolated synthetic WQM dataset by default; Gateway history reads actual stored uploads, including test packets. Cellular HTTPS ingestion and duplicate handling are verified. Real GPS integration, ML forecasts, alerts and admin authentication remain future work. These local changes have not been deployed or pushed.
+> **Current status (November 2026):** the boat-to-dashboard chain works end to end. The STM32 sensor node sends readings over UART to the ESP32 + SIM7600G-H gateway, which adds the GPS position, a UTC timestamp and a packet UUID, stores each packet in flash and uploads it over 4G (HTTPS) to the Supabase `ingest` Edge Function. `/dashboard` shows measurement cards, selectable trends, dissolved-solids trend, packet activity, the boat's live GPS position on the map, packet inspection and CSV export. ML forecasts, alerts and admin authentication are the next workstreams.
 
 ### Run the dashboard
 
@@ -18,33 +18,42 @@ palettes. The choice is saved in browser storage and a dashboard-scoped cookie,
 so page reloads render the saved palette. Charts, packet dialogs and map controls
 follow the palette; OpenStreetMap raster tiles use a CSS filter in dark mode.
 
-Demo readings live in `public.dashboard_demo_packets`, separate from
-`public.telemetry_packets`. The seed creates 96 synthetic readings for one boat
-(one virtual node, at 15-minute intervals) and enables RLS with
-no direct anon/authenticated access. It does not change gateway ingestion or
-the allowlist. The read-only Next.js `/api/dashboard` route uses a server key
-to read WQM only; credentials are never passed to the browser.
+Choose a 1/6/24-hour window, select any of the 12 chart parameters, inspect a
+packet or export the selected readings. **Gateway history** shows the packets
+uploaded by the boat. Windows end at the latest stored packet, not the current
+clock, and Refresh fetches the newest stored data. The server loads at most 500
+packets per request and displays a notice if that limit is reached. The
+read-only `/api/dashboard` route reads with a server key; credentials are never
+passed to the browser.
 
-```powershell
-node --env-file=.env.local scripts/seed-dashboard-demo.mjs
+The packet inspector shows the full stored payload, a short form of the
+gateway-generated packet **UUID** (with a copy button for the full value) and
+when the server received the packet.
+
+### Gateway ingestion
+
+The gateway (`ESP32 + SIM7600G-H`, see the
+[gateway repository](https://github.com/WQM-Project/gateway)) posts each packet
+to the Supabase Edge Function `supabase/functions/ingest`, generated from
+`lib/server/ingest.ts` (`npm run edge:prepare`). Every request must carry:
+
+- `Authorization: Bearer <GATEWAY_INGEST_KEY>`
+- `Content-Type: application/json`
+- `X-Packet-Id: <uuid>`, generated once per packet by the gateway
+
+The handler validates every field against `packetSchema`, accepts only node IDs
+listed in `GATEWAY_ALLOWED_NODE_IDS`, and stores the packet in
+`public.telemetry_packets` through the `ingest_telemetry` RPC. A retry with the
+same packet ID and identical data returns `200` with `duplicate: true`, so
+cellular retries never create duplicate readings; the same ID with different
+data returns `409`. Deploy after changing the schema:
+
+```bash
+npm run edge:prepare
+npx supabase@latest functions deploy ingest --project-ref scvcufiagvbeixhnwjze --no-verify-jwt
 ```
 
-This WQM-only script is idempotent: an existing 96-row dataset is preserved,
-not replaced. The original three-node demo is reduced by removing only the two
-extra synthetic nodes using `202610120001_single_boat_demo.sql`. It applies the saved `202610110001_dashboard_demo.sql` when the
-demo table is absent. Local script execution uses the isolated `pg` dependency
-and verified Supabase CA in `.wqm-tools`, as documented in the backend setup.
-
-Switch between **Workspace readings** and **Gateway history** for the single boat and a
-1/6/24-hour window, select any of the 12 chart parameters, inspect a packet or
-export the selected readings. Windows end at the latest stored packet, not the
-current clock. Refresh fetches stored data; it does not generate new readings.
-Packet counts do not claim live connectivity, and demo values are not water
-safety assessments. The server currently loads at most 500 packets per source
-and displays a notice if that limit is reached.
-The interface uses neutral labels; the header's **About these readings** button
-explains which source is generated or uploaded. Internal demo IDs remain in raw
-stored packets and CSV exports for traceability.
+`--no-verify-jwt` is required because the gateway authenticates with its own key.
 
 ### Boat map
 
@@ -65,18 +74,16 @@ browser; retain attribution and follow its [tile usage policy](https://operation
 For higher traffic or offline operation, configure an appropriate tile provider;
 do not bulk-download or prefetch standard OpenStreetMap tiles.
 
-`lib/map-config.ts` contains the approximate IIT Mandi North Campus reference
-(`31.78129, 76.99750`, from [OSM-based Mapcarta](https://mapcarta.com/W761379545))
-and a separate illustrative boat marker nearby. These are display-only constants,
-not stored GPS readings or additions to the 14-field telemetry packet.
+The boat marker shows the **latest packet that carries a GPS position**
+(`latestBoatPosition()` in `lib/map-config.ts`), searched across the whole
+loaded history so a quiet time window does not hide the last known position.
+The caption shows when that packet was received; if the gateway reported the
+fix as older than 2 minutes (`gps_age_s`), it adds a note that the boat may have
+moved. Until the first GPS packet arrives, the map centres on the approximate
+IIT Mandi North Campus reference (`31.78129, 76.99750`, from
+[OSM-based Mapcarta](https://mapcarta.com/W761379545)) and shows **GPS pending**.
 `components/ui/dashboard-4-utils/leaflet-boat-map.tsx` imports Leaflet client-side and
 removes the map on unmount; CSS is scoped to the dashboard route.
-
-Demo mode labels the single boat marker as synthetic. Gateway history shows
-only the campus reference and **GPS pending** until actual GPS data is wired in.
-The map accepts an optional validated `{ latitude, longitude, recordedAt }`
-position for future integration, but no current API supplies it. Extending the
-edge/gateway/backend contract is still required before plotting real GPS fixes.
 
 **Context** — Design Practicum, Team WQM, IIT Mandi. This repository is the data and dashboard workstream.
 
@@ -90,7 +97,7 @@ flowchart LR
         A["edge-sensing-node<br/>STM32F722ZE<br/>10+ sensors"]
     end
     subgraph relay["Relay Layer"]
-        B["gateway<br/>ESP8266 + SIM7600E"]
+        B["gateway<br/>ESP32 + SIM7600G-H<br/>4G LTE + GNSS"]
     end
     subgraph cloud["Cloud & Analytics"]
         C[("Supabase<br/>Postgres + PostGIS")]
@@ -101,8 +108,8 @@ flowchart LR
         F["Alert Dispatcher<br/>MacroDroid SMS<br/>modem · Telegram"]
     end
 
-    A -- "JSON over LoRa 868MHz" --> B
-    B -- "HTTPS + JSON over 4G LTE" --> C
+    A -- "JSON lines over UART 115200" --> B
+    B -- "HTTPS + JSON over 4G LTE<br/>+ GPS, UTC time, packet UUID" --> C
     C -- "read history" --> D
     D -- "write class / anomaly / forecast" --> C
     C -- "Realtime subscription" --> E
@@ -152,18 +159,6 @@ flowchart LR
 
 ---
 
-## Divergence From the Master Spec
-
-The [master specification](https://github.com/WQM-Project/WQM) names **Firebase Firestore** and **React 18 + Vite**. This repo uses **Supabase Postgres** and **Next.js**. That is a proposal to the team, not a settled decision.
-
-**Why Postgres.** This project is geospatial and time-series at heart, and Firestore is weak at both: a `GeoPoint` stores a coordinate but cannot answer "within 500 m of this bend", and there is no `GROUP BY` or window function for rollups. Per-document billing is also what pushed the "data bucketing" workaround into the master spec — distorting the schema to dodge write costs. Postgres gives PostGIS, real SQL, typed columns that reject a malformed payload, and a database `water-quality-ml` can read directly with `read_sql`. Realtime push — the best reason to pick Firestore — is matched by Supabase Realtime.
-
-**Why Next.js.** Two needs appeared after the spec was written: the gateway needs a server-side endpoint to POST telemetry to, and alert dispatch needs somewhere server-side to hold credentials. A static Vite SPA can do neither without a second service. Next.js Route Handlers give us both in one deployment, and it is still React — component work carries over unchanged.
-
-**Cost of diverging:** the gateway's upload target changes (one URL and an auth header), and any Firebase code already written in sibling repos needs revisiting. Worth settling with the gateway owner early.
-
----
-
 ## Alerting Without Twilio
 
 > [!IMPORTANT]
@@ -176,7 +171,7 @@ Only one channel satisfies both.
 | Priority | Channel | Mechanism | Cost | Can Vercel trigger it? | Arrives as |
 |---|---|---|---|---|---|
 | **1. Primary** | **MacroDroid forwarding** | An HTTP trigger hits a MacroDroid rule on a dedicated Android handset, which sends SMS from that handset's own SIM. | Free app + ordinary carrier SMS | **Yes** — plain webhook | **SMS** |
-| 2. Fallback | **Onboard modem SMS** | The gateway's SIM7600E / A7670C is driven over UART AT commands (`AT+CMGS`). | Carrier SMS only — hardware already owned | No — the modem is on the riverbank, not the web host | **SMS** |
+| 2. Fallback | **Onboard modem SMS** | The gateway's SIM7600G-H is driven over UART AT commands (`AT+CMGS`). | Carrier SMS only — hardware already owned | No — the modem is on the riverbank, not the web host | **SMS** |
 | 3. Internal only | **Telegram Bot API** | `POST /sendMessage` with a bot token. | Free | Yes | Telegram message |
 
 **Why MacroDroid is primary.** It is the only path where the channel the dashboard can actually reach and the channel the recipient actually reads are the same channel. The modem sends real SMS too, but a serverless function cannot open a serial port two hundred kilometres away — reaching it means calling back to the gateway and depending on the gateway's uplink being alive. MacroDroid needs only a handset with signal and a data connection.
@@ -187,7 +182,7 @@ Only one channel satisfies both.
 
 - No Twilio SDK and no `TWILIO_*` credentials anywhere.
 - `alert_deliveries` records a `channel` (`sms_macrodroid` | `sms_modem` | `telegram`) and a `provider_ref` rather than a vendor message SID, because there is no longer a single vendor.
-- The handset is now infrastructure. It needs power, credit and signal, and its liveness should be monitored like any other node — a silent handset means silent alerts. See Open Question 4.
+- The handset is now infrastructure. It needs power, credit and signal, and its liveness should be monitored like any other node — a silent handset means silent alerts. See Open Question 3.
 
 ---
 
@@ -228,12 +223,27 @@ The gateway relays the packet emitted by [`edge-sensing-node`](https://github.co
 | `depth_cm` | `real` | cm | Ultrasonic water level (JSN-SR04T). |
 | `temp_air` / `humidity` / `pressure_hpa` | `real` | °C / % / hPa | Atmospheric (BME280). |
 
+### Fields added by the gateway
+
+The gateway appends these before upload; the STM32 never sends them.
+
+| Field | Type | Unit | Notes |
+|---|---|---|---|
+| `gps_fix` | `boolean` | — | `true` when a settled SIM7600 GNSS position is attached. Always present. |
+| `lat` / `lon` | `real` | degrees | WGS84, 6 decimals. Only with a fix; always sent together. |
+| `gps_age_s` | `integer` | s | Age of that fix when the packet was stamped. Large values mean the boat may have moved since. |
+| `utc_s` | `integer` | s | Unix time when the gateway received the packet, from the mobile network or GPS clock. Correct even for packets queued offline. Absent until the clock is set. |
+
+The packet UUID travels in the `X-Packet-Id` header and is stored as
+`telemetry_packets.packet_id`. The STM32 → ESP32 UART contract is documented in
+the gateway repository (`docs/STM32_INTEGRATION.md`).
+
 ---
 
 ## Upstream Contract Reconciliation
 
 > [!WARNING]
-> Four different shapes for the same readings exist across the project's own documents and repositories, and they do not agree. This repo sits downstream of all of them, so these need reconciling before the schema is migrated.
+> Four different shapes for the same readings exist across the project's own documents and repositories, and they do not agree. This repo sits downstream of all of them, so the remaining conflicts below need reconciling with the other workstreams.
 
 | Source | Shape |
 |---|---|
@@ -246,128 +256,34 @@ The gateway relays the packet emitted by [`edge-sensing-node`](https://github.co
 
 | # | Conflict | Consequence |
 |---|---|---|
-| 1 | **No GPS in the firmware packet.** B specifies `location{lat,lng}` and the master spec lists a NEO-6M; A has no `lat` / `lon` field. | Map View — the headline dashboard feature — has nothing to plot. **Blocking.** |
+| 1 | ~~**No GPS in the firmware packet.**~~ **Resolved:** the gateway adds `lat` / `lon` / `gps_fix` / `gps_age_s` from the SIM7600G-H GNSS receiver, so no NEO-6M is needed. | Map View plots the boat's latest position. |
 | 2 | **No battery voltage in the firmware packet.** B has `battery_v`; A does not. | Node Health view cannot show battery state. |
 | 3 | **Conductivity unit mismatch.** A sends `ec_uscm` (µS/cm); B specifies `conductivity_msCm` (mS/cm). | A silent 1000x error. `680.2 µS/cm` read as mS/cm is off by three orders of magnitude and would still plot as a plausible-looking line. |
-| 4 | **Timestamp semantics.** A sends `HAL_GetTick()` — ms since boot; B specifies an ISO 8601 UTC instant. | Readings cannot be ordered across a node reboot without server-side timestamping. |
+| 4 | **Timestamp semantics.** A sends `HAL_GetTick()` — ms since boot; B specifies an ISO 8601 UTC instant. **Mitigated:** the gateway adds `utc_s` (UTC arrival time) and the server assigns `recorded_at`. | Readings can be ordered across node reboots and offline queueing. |
 | 5 | **Chlorides required but never measured.** C lists Chlorides as a feature that measurably improved accuracy; there is no chloride sensor in the suite. | The v2 model cannot be fed live data as specified. |
 | 6 | **TDS measured but discarded.** C drops TDS as a perfect linear derivative of EC (`TDS = EC x 0.65`, 0.000% information gain), yet A still transmits it. | Harmless, but it should be stored as a derived value rather than treated as an independent measurement. |
 | 7 | **The ML API does not accept the boat's payload.** D is the Kaggle water-potability schema — Hardness, Sulfate, Trihalomethanes — with the boat's own parameters marked optional and *"not in training data"*. The `river_beas_v2` models are committed, but `api.py` still loads `kaggle_v1`. | The dashboard cannot call `/predict` with a real packet today. **Blocking** for the grading feature. |
 
-**Position taken here:** shape **A** is authoritative, because it is the only one that physically exists — it is what the hardware actually transmits today. The schema below mirrors A field-for-field, adds a server-assigned `recorded_at`, and pre-declares nullable `location` and `battery_v` columns so no migration is needed the day the firmware starts sending them.
+**Position taken here:** shape **A** is authoritative, because it is the only one that physically exists — it is what the hardware actually transmits today. The server stores A as validated JSON with a server-assigned `recorded_at`, and the gateway adds the GPS and UTC fields, so new fields such as `battery_v` need only a schema change in `lib/server/ingest.ts`, not a database migration.
 
 ---
 
-## Database Schema
+## Database
 
-```mermaid
-erDiagram
-    NODES ||--o{ READINGS : "emits"
-    NODES ||--o{ MISSIONS : "runs"
-    MISSIONS ||--o{ READINGS : "groups"
-    READINGS ||--o| WQI_SCORES : "scored as"
-    NODES ||--o{ FORECASTS : "predicted for"
-    NODES ||--o{ ALERTS : "raises"
-    THRESHOLDS ||--o{ ALERTS : "triggers"
-    ALERTS ||--o{ ALERT_DELIVERIES : "fans out to"
-    CONTACTS ||--o{ ALERT_DELIVERIES : "receives"
+Gateway packets are stored in `public.telemetry_packets`
+(`supabase/migrations/202610090001_gateway_ingestion.sql`):
 
-    NODES {
-        uuid id PK
-        text device_id UK
-        text label
-        text river
-        geography home_point
-        timestamptz commissioned_at
-        bool active
-    }
-    READINGS {
-        bigint id PK
-        uuid node_id FK
-        uuid mission_id FK
-        timestamptz recorded_at
-        bigint node_uptime_ms
-        geography location
-        real ph
-        real turbidity_ntu
-        real tds_ppm
-        real do_mgl
-        real ec_uscm
-        real orp_mv
-        real temp_water_c
-        real temp_water_backup_c
-        real depth_cm
-        real temp_air_c
-        real humidity_pct
-        real pressure_hpa
-    }
-    MISSIONS {
-        uuid id PK
-        uuid node_id FK
-        timestamptz started_at
-        timestamptz ended_at
-        text stage
-        jsonb waypoints
-    }
-    WQI_SCORES {
-        bigint reading_id PK
-        real wqi
-        text band
-        jsonb sub_indices
-    }
-    FORECASTS {
-        uuid id PK
-        uuid node_id FK
-        timestamptz generated_at
-        timestamptz target_at
-        real predicted_wqi
-        real confidence_low
-        real confidence_high
-        text model
-    }
-    THRESHOLDS {
-        uuid id PK
-        text parameter
-        real min_ok
-        real max_ok
-        text severity
-        text standard
-    }
-    ALERTS {
-        uuid id PK
-        uuid node_id FK
-        uuid threshold_id FK
-        bigint reading_id FK
-        timestamptz raised_at
-        text severity
-        text message
-        bool acknowledged
-    }
-    CONTACTS {
-        uuid id PK
-        text name
-        text phone_e164
-        text channel
-        text authority
-        bool active
-    }
-    ALERT_DELIVERIES {
-        uuid id PK
-        uuid alert_id FK
-        uuid contact_id FK
-        timestamptz sent_at
-        text provider_ref
-        text status
-    }
-```
+| Column | Type | Notes |
+|---|---|---|
+| `device_id` | `text` | Boat ID from the packet (`id`), e.g. `WQM-001` |
+| `packet_id` | `uuid` | Gateway-generated; with `device_id` forms the primary key |
+| `recorded_at` | `timestamptz` | Assigned by the server on insert |
+| `node_uptime_ms` | `bigint` | The packet's `ts` (STM32 uptime) |
+| `payload` | `jsonb` | The full validated packet, including gateway GPS and time fields |
 
-**Design notes**
-
-- `recorded_at` is assigned **server-side on ingest**; `node_uptime_ms` preserves the raw `ts` for clock-drift analysis. We do not trust boot-relative time as a timestamp.
-- `location` is PostGIS `geography(Point, 4326)` — a GiST index makes heatmap viewport queries fast.
-- `WQI_SCORES` is separate from `READINGS` so the WQI formula can be revised and backfilled without touching raw sensor data. **Raw readings are immutable.**
-- `ALERT_DELIVERIES` is separate from `ALERTS` so one breach fanning out to eight contacts becomes eight auditable delivery rows, each with the sending channel and that channel's own reference (a modem message reference, a Telegram message id).
-- `MISSIONS.stage` distinguishes Stage 1 (RC) from Stage 2 (autonomous) survey runs.
+Row Level Security is enabled with no anon/authenticated access; only the
+server role can read or insert. The `ingest_telemetry(packet_id, packet)` RPC
+inserts a packet and reports whether it was an identical retry.
 
 ---
 
@@ -375,38 +291,26 @@ erDiagram
 
 ```mermaid
 sequenceDiagram
-    participant GW as Gateway
-    participant API as /api/ingest
+    participant STM as STM32 node
+    participant GW as ESP32 gateway
+    participant FN as Edge Function ingest
     participant DB as Supabase Postgres
-    participant RT as Supabase Realtime
-    participant UI as Dashboard UI
-    participant ML as water-quality-ml
-    participant TW as MacroDroid / modem
+    participant UI as Dashboard
 
-    GW->>API: POST telemetry JSON + node API key
-    API->>API: validate schema, verify key, assign recorded_at
-    API->>DB: INSERT INTO readings
-    DB->>DB: trigger - compute WQI, INSERT wqi_scores
-    DB->>DB: trigger - evaluate thresholds
-    DB-->>RT: logical replication event
-    RT-->>UI: push new reading over WebSocket
-    UI->>UI: update map, charts, 3D scene
-
-    alt WQI breaches threshold
-        DB->>API: pg_net call to /api/alerts
-        API->>TW: webhook per contact, forwarded as SMS
-        TW-->>API: provider reference + status
-        API->>DB: INSERT alert_deliveries
-        RT-->>UI: push alert banner
-    end
-
-    loop every 6 hours
-        ML->>DB: SELECT recent readings
-        ML->>ML: XGBoost class, Isolation Forest, Prophet
-        ML->>DB: INSERT INTO forecasts / wqi_scores
-        RT-->>UI: push updated forecast overlay
-    end
+    STM->>GW: JSON line over UART (115200)
+    GW->>GW: validate, add GPS + utc_s + packet UUID, save to flash
+    GW-->>STM: ACK
+    GW->>FN: HTTPS POST over 4G + gateway key + X-Packet-Id
+    FN->>FN: verify key, validate schema, check node allowlist
+    FN->>DB: ingest_telemetry RPC into telemetry_packets
+    FN-->>GW: 201 saved / 200 duplicate
+    GW->>GW: delete packet from flash
+    UI->>DB: /api/dashboard reads latest packets (server key)
+    UI->>UI: cards, charts, map position, packet inspector
 ```
+
+Planned next: WQI scoring and `water-quality-ml` predictions written back to
+the database, and threshold alerts dispatched through `/api/alerts`.
 
 ---
 
@@ -418,7 +322,7 @@ The five views agreed in the Design Practicum summary, mapped onto this app's ro
 |---|---|---|---|---|
 | `/` | Public | Landing | River health summary, live packet, architecture | — |
 | `/overview` | Public | **Time-Series** + **Quality & Forecast** | Per-parameter charts at 24 h / 7 d / 30 d with CPCB and IS 10500 threshold lines; live quality class with the Prophet forecast dashed | Prophet not implemented upstream |
-| `/map` | Public | **Map View** | Leaflet pin per node coloured by quality class; click for a trend popup | Conflict 1 — no GPS |
+| `/map` | Public | **Map View** | Leaflet pin per node coloured by quality class; click for a trend popup | — (boat position already on `/dashboard`) |
 | `/map/3d` | Public | River scene | Three.js depth profile and pollutant plume | — |
 | `/nodes` | Auth | **Node Health** | Battery voltage, last-seen, signal strength per node | Conflict 2 — no `battery_v` |
 | `/nodes/[deviceId]` | Auth | Node detail | Full history, raw packets, diagnostics | — |
@@ -463,12 +367,14 @@ The five views agreed in the Design Practicum summary, mapped onto this app's ro
 
 ### MVP — v0.1
 
-- [ ] Authenticated ingestion endpoint accepting the gateway payload
-- [ ] Postgres schema, migrations and RLS policies
+- [x] Authenticated ingestion endpoint accepting the gateway payload, with duplicate-safe retries
+- [x] Postgres schema, migrations and RLS policies (`telemetry_packets`)
+- [x] Gateway GPS position, fix age and UTC time in every packet
 - [ ] Node list with online/offline status and last-seen
 - [ ] Live readings table with realtime insert streaming
-- [ ] Per-parameter time-series chart (Recharts), selectable time window
-- [ ] Leaflet map with node markers and latest-reading popups
+- [x] Per-parameter time-series chart (Recharts), selectable time window
+- [x] Map with the boat's latest GPS position (Leaflet, optional Google Maps)
+- [x] Packet inspector and CSV export
 - [ ] Current quality class (Excellent / Good / Poor / Dangerous) with colour coding
 - [ ] Node health panel — battery voltage, last-seen, signal strength
 - [ ] Public read-only view + authenticated operator view
@@ -482,7 +388,7 @@ The five views agreed in the Design Practicum summary, mapped onto this app's ro
 - [ ] Seasonal decomposition view
 - [ ] Anomaly feed — rule breaches and Isolation Forest flags, side by side
 - [ ] Threshold editor (per-parameter, per-standard)
-- [ ] CSV / report export
+- [ ] Report export (CSV export is done)
 
 ### v0.3 — Alerting & 3D
 
@@ -512,32 +418,26 @@ The five views agreed in the Design Practicum summary, mapped onto this app's ro
 ```
 wqm-web-dashboard/
 ├── app/
-│   ├── (dashboard)/
-│   │   ├── overview/          # gauge grid, live series, alert feed
-│   │   ├── map/               # Leaflet + 3D river scene
-│   │   ├── nodes/             # fleet + per-node drill-down
-│   │   └── alerts/            # alert history, thresholds, contacts
+│   ├── page.tsx               # landing page
+│   ├── dashboard/             # monitoring dashboard
 │   └── api/
-│       ├── ingest/            # gateway -> Postgres
-│       └── alerts/            # threshold breach -> MacroDroid webhook -> SMS
+│       ├── ingest/            # Next.js ingestion route (same handler as the Edge Function)
+│       ├── dashboard/         # read-only data for the dashboard
+│       ├── health/            # liveness check
+│       └── alerts/            # alert dispatch (planned)
 ├── components/
-│   ├── charts/                # Recharts wrappers
-│   ├── map/                   # Leaflet layers, heatmap, markers
-│   ├── three/                 # R3F scene, shaders, river mesh
-│   ├── layout/                # shell, nav, theme
-│   └── ui/                    # shadcn/ui primitives
+│   ├── landing/               # landing page sections
+│   └── ui/                    # shadcn/ui primitives, dashboard-4 and its widgets
 ├── lib/
-│   ├── supabase/              # browser + server clients, typed queries
-│   ├── wqi/                   # WQI formula, sub-indices, banding
-│   └── utils/                 # units, formatters, time helpers
-├── hooks/                     # useRealtimeReadings, useNodeStatus, ...
-├── types/                     # telemetry + generated DB types
-├── styles/
-├── public/models/             # GLTF assets for the 3D scene
+│   ├── server/                # ingest.ts (packet schema + handler), storage.ts, dashboard.ts
+│   ├── dashboard.ts           # shared types, metric definitions, labels
+│   └── map-config.ts          # map reference point, latest boat position
 ├── supabase/
 │   ├── migrations/            # versioned SQL
-│   └── functions/             # Edge Functions
-└── docs/                      # ADRs, calibration notes, API reference
+│   └── functions/ingest/      # generated Edge Function the gateway posts to
+├── scripts/                   # edge function generator, backend tests, test sender
+├── tests/                     # ingestion tests (npm test)
+└── docs/                      # gateway backend, edge and Google Maps setup
 ```
 
 ---
@@ -548,74 +448,43 @@ wqm-web-dashboard/
 git clone https://github.com/WQM-Project/wqm-web-dashboard.git
 cd wqm-web-dashboard
 npm install
-cp .env.example .env.local
-npx supabase start
-npx supabase db reset
+cp .env.example .env.local   # then fill in the values below
 npm run dev
 ```
 
-Then open `http://localhost:3000`.
+Then open `http://localhost:3000/dashboard`. **Prerequisites:** Node.js 20+.
 
-**Prerequisites:** Node.js 20+, Docker (for local Supabase), Supabase CLI.
+| Command | Purpose |
+|---|---|
+| `npm test` | Ingestion and storage tests |
+| `npm run typecheck` | TypeScript check |
+| `npm run edge:prepare` | Regenerate `supabase/functions/ingest` from `lib/server` |
+| `npm run test:upload` | Send one test packet to the configured backend |
 
 ### Environment Variables
 
 | Variable | Scope | Purpose |
 |---|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | Client | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Client | Anon key — RLS-restricted, safe to expose |
-| `SUPABASE_SERVICE_ROLE_KEY` | **Server only** | Bypasses RLS. Never expose to the browser. |
-| `GATEWAY_INGEST_KEY` | Server | Shared secret the gateway sends on `/api/ingest` |
-| `MACRODROID_WEBHOOK_URL` | **Server only** | Trigger URL for the MacroDroid SMS-forwarding rule — the primary alert channel |
-| `GATEWAY_SMS_CALLBACK_URL` | **Server only** | Gateway endpoint used to fall back to onboard-modem SMS |
-| `TELEGRAM_BOT_TOKEN` | **Server only** | Telegram Bot API token — internal team monitoring only |
-| `TELEGRAM_CHAT_ID` | Server | Target chat for internal notifications |
-| `ML_API_URL` | Server | Base URL of the `water-quality-ml` FastAPI service |
+| `SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_URL` | Server / Client | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Client | Public key, restricted by RLS |
+| `SUPABASE_SECRET_KEY` (or `SUPABASE_SERVICE_ROLE_KEY`) | **Server only** | Bypasses RLS. Never expose to the browser. |
+| `GATEWAY_INGEST_KEY` | **Server only** | Shared secret the gateway sends as `Authorization: Bearer` |
+| `GATEWAY_ALLOWED_NODE_IDS` | Server | Comma-separated boat IDs allowed to upload, e.g. `WQM-001` |
+| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` / `_MODE` / `_MAP_ID` | Client | Optional Google Maps; see [setup](docs/GOOGLE_MAPS_SETUP.md) |
+| `ML_API_URL` | Server | Base URL of the `water-quality-ml` service (planned) |
+| `MACRODROID_WEBHOOK_URL`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | **Server only** | Alert channels (planned) |
 
 ---
 
 ## Deployment
 
-Vercel, connected to this repository.
-
-| Branch | Environment | URL |
+| Part | Where | How |
 |---|---|---|
-| `main` | Production | <https://wqm-web-dashboard.vercel.app> |
-| `dev` | Staging | _not yet created_ |
-| PR branches | Preview | auto-generated per PR |
+| Dashboard | Vercel, <https://wqm-web-dashboard.vercel.app> | Push to `main`; PR branches get preview deployments |
+| Ingestion | Supabase Edge Function `ingest` | `npm run edge:prepare`, then the deploy command in [Gateway ingestion](#gateway-ingestion) |
 
-Pushing to `main` deploys to production. Environment variables are configured in the Vercel project and are **not** committed.
-
-The project currently runs with **no environment variables set**, because nothing in the app reads one yet. Add each only when the code that consumes it lands — an empty value is not the same as an absent one, and `process.env.X ?? fallback` will not catch an empty string.
-
----
-
-## Development Workflow
-
-```mermaid
-gitGraph
-    commit id: "scaffold"
-    branch dev
-    commit id: "schema"
-    branch live-charts
-    commit id: "recharts series"
-    commit id: "realtime hook"
-    checkout dev
-    merge live-charts
-    branch river-3d
-    commit id: "r3f scene"
-    commit id: "plume shader"
-    checkout dev
-    merge river-3d
-    checkout main
-    merge dev tag: "v0.1.0"
-```
-
-- `main` — protected, always deployable. Merges from `dev` only.
-- `dev` — integration branch. Feature branches merge here via pull request.
-- `feat/*`, `fix/*`, `docs/*` — short-lived, one concern each.
-- Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`).
-- Every PR gets a Vercel preview deployment. Review against the preview, not a local build.
+Environment variables are configured in Vercel and Supabase and are **never**
+committed.
 
 ---
 
@@ -625,13 +494,12 @@ Decisions the wider team needs to make. Data-shape conflicts are tracked separat
 
 | # | Question | Blocks | Owner |
 |---|---|---|---|
-| 1 | **Backend switch to Supabase** — is the team agreed? The gateway's upload target changes. | Schema, ingestion | Gateway owner + ML |
-| 2 | **Threshold values** — the rule layer uses CPCB / BIS limits. Which exact limits, per parameter, and are they the same values the dashboard draws as threshold lines on charts? | Alerting, charts | ML + domain lead |
-| 3 | **Alert recipients and escalation policy** — who is contacted, at what severity, and with what cool-down to prevent alert storms? | Alert dispatch | Project lead |
-| 4 | **Who owns the MacroDroid handset?** It becomes real infrastructure — power, SIM credit, signal, uptime monitoring. A silent handset means silent alerts, which is worse than none because it looks fine. | Alert delivery | Project lead |
-| 5 | **Numeric index or class?** The classifier emits four categories; the dashboard spec shows a WQI gauge. Is a numeric WQI still wanted, and if so how is it computed? | Grading UI | ML + domain lead |
-| 6 | **Leaflet vs deck.gl** — Leaflet is in the master spec, but WebGL-accelerated heatmaps scale better with dense survey tracks. Decide before the map layer is built. | Map implementation | This repo |
-| 7 | **Data retention** — how long are raw readings kept at full resolution before downsampling? | Schema, cost | Project lead |
+| 1 | **Threshold values** — the rule layer uses CPCB / BIS limits. Which exact limits, per parameter, and are they the same values the dashboard draws as threshold lines on charts? | Alerting, charts | ML + domain lead |
+| 2 | **Alert recipients and escalation policy** — who is contacted, at what severity, and with what cool-down to prevent alert storms? | Alert dispatch | Project lead |
+| 3 | **Who owns the MacroDroid handset?** It becomes real infrastructure — power, SIM credit, signal, uptime monitoring. A silent handset means silent alerts, which is worse than none because it looks fine. | Alert delivery | Project lead |
+| 4 | **Numeric index or class?** The classifier emits four categories; the dashboard spec shows a WQI gauge. Is a numeric WQI still wanted, and if so how is it computed? | Grading UI | ML + domain lead |
+| 5 | **Leaflet vs deck.gl** — Leaflet is in the master spec, but WebGL-accelerated heatmaps scale better with dense survey tracks. Decide before the map layer is built. | Map implementation | This repo |
+| 6 | **Data retention** — how long are raw readings kept at full resolution before downsampling? | Schema, cost | Project lead |
 
 ---
 
@@ -641,7 +509,7 @@ Decisions the wider team needs to make. Data-shape conflicts are tracked separat
 |---|---|---|
 | [WQM](https://github.com/WQM-Project/WQM) | Spec | Master project specification |
 | [edge-sensing-node](https://github.com/WQM-Project/edge-sensing-node) | Edge | STM32 firmware, sensor acquisition |
-| [gateway](https://github.com/WQM-Project/gateway) | Relay | ESP8266 + SIM7600E LoRa-to-4G bridge |
+| [gateway](https://github.com/WQM-Project/gateway) | Relay | ESP32 + SIM7600G-H gateway: STM32 UART in, GPS stamping, flash queue, 4G HTTPS upload |
 | [water-quality-ml](https://github.com/WQM-Project/water-quality-ml) | Analytics | XGBoost classification, Isolation Forest anomalies, Prophet forecasting, FastAPI service |
 | [wqm-mechanical](https://github.com/WQM-Project/wqm-mechanical) | Hardware | Catamaran hull CAD |
 | **wqm-web-dashboard** | Presentation | **This repo** |
