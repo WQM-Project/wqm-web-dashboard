@@ -14,6 +14,8 @@ export const packetSchema = z.object({
   lon: z.number().finite().min(-180).max(180).optional(),
   gps_fix: z.boolean().optional(),
   gps_age_s: z.number().int().min(0).max(4294967295).optional(),
+  // Gateway arrival time, Unix seconds UTC; absent until its clock is set.
+  utc_s: z.number().int().min(1767225600).max(4294967295).optional(),
 }).strict().superRefine((packet, context) => {
   if ((packet.lat === undefined) !== (packet.lon === undefined))
     context.addIssue({ code: 'custom', path: ['lon'], message: 'lat and lon must be sent together' })

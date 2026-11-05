@@ -60,6 +60,8 @@ test('accepts gateway GPS fields and rejects inconsistent ones', () => {
   assert.equal(packetSchema.safeParse({ ...located, lon: undefined }).success, false)
   assert.equal(packetSchema.safeParse({ ...packet, gps_fix: true }).success, false)
   assert.equal(packetSchema.safeParse({ ...located, gps_age_s: 1.5 }).success, false)
+  assert.equal(packetSchema.safeParse({ ...located, utc_s: 1793833000 }).success, true)
+  assert.equal(packetSchema.safeParse({ ...located, utc_s: 0 }).success, false)
 })
 test('fails closed without configuration and never acknowledges failed storage', async () => {
   const handler = createIngestHandler({ key, allowedNodes: ['WQM-001'], save: async () => { throw new Error('secret database detail') } })
