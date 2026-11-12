@@ -2,9 +2,9 @@
  * Telemetry contract.
  *
  * This mirrors, field for field, the JSON packet emitted by the STM32 edge
- * sensing node and relayed to the cloud by the LoRa gateway. It is the single
- * source of truth for the landing page and, later, for the Supabase schema and
- * the generated database types.
+ * sensing node and uploaded to the cloud by the onboard ESP32 + SIM7600 gateway.
+ * It is the single source of truth for the landing page and, later, for the
+ * Supabase schema and the generated database types.
  *
  * See: https://github.com/WQM-Project/edge-sensing-node
  */

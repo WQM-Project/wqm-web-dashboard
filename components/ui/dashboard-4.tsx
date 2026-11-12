@@ -334,8 +334,8 @@ export function Dashboard({
             <FlaskConical className="mb-3 size-5 text-muted-foreground" />
             <p className="text-xs font-semibold">Built for the river.</p>
             <p className="mt-2 text-xs leading-5 text-muted-foreground">
-              Explore the workspace while boat and LoRa integration are in
-              progress.
+              Explore the workspace while onboard STM32-to-ESP32 UART
+              integration is in progress.
             </p>
           </div>
           <div className="mt-5 flex items-center gap-2 px-2">

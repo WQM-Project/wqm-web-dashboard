@@ -53,7 +53,7 @@ export function RiverHero() {
               <motion.div className="absolute inset-x-6 bottom-32 md:inset-x-12 lg:inset-x-20" style={{ opacity: detailOpacity, y: detailY }}>
                 <p className="mb-4 text-sm font-medium">From the river, to a reading.</p>
                 <h2 className="max-w-lg text-balance font-serif text-4xl leading-tight md:text-6xl">Meet the boat.</h2>
-                <p className="mt-4 max-w-xs text-pretty text-base leading-relaxed text-white/90">Water-quality sensors on board. Measurements sent ashore over LoRa.</p>
+                <p className="mt-4 max-w-xs text-pretty text-base leading-relaxed text-white/90">Water-quality sensors and cellular gateway on board. Measurements pushed straight over 4G LTE.</p>
               </motion.div>
             )}
 

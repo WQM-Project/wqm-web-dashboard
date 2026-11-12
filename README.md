@@ -188,7 +188,7 @@ Only one channel satisfies both.
 
 ## Telemetry Contract
 
-The gateway relays the active packet emitted by [`edge-sensing-node`](https://github.com/WQM-Project/edge-sensing-node) (required water/atmospheric fields + optional NEO-M8N GNSS and BNO085 IMU fields; reserved probes like turbidity/EC/depth/humidity remain optional).
+The onboard ESP32 + SIM7600 gateway receives the active UART packet emitted by [`edge-sensing-node`](https://github.com/WQM-Project/edge-sensing-node), attaches SIM7600 GNSS coordinates and UTC time, and uploads over 4G LTE (required water/atmospheric fields + optional GNSS and BNO085 IMU fields; reserved probes like turbidity/EC/depth/humidity remain optional).
 
 ```json
 {
