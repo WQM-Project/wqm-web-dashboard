@@ -2,15 +2,15 @@
 
 ## Data expected by the backend
 
-Send one complete JSON object per reading with these exact fields:
-`id`, `ts`, `pH`, `turb_ntu`, `tds_ppm`, `do_mgl`, `ec_uscm`, `orp_mv`,
-`temp_w1`, `temp_w2`, `depth_cm`, `temp_air`, `humidity`, `pressure_hpa`.
+Send one complete JSON object per reading containing all required active fields:
+`id`, `ts`, `pH`, `tds_ppm`, `do_mgl`, `orp_mv`, `temp_w1`, `temp_air`, `pressure_hpa`.
+
+Optional/reserved sensor fields (`turb_ntu`, `ec_uscm`, `temp_w2`, `depth_cm`, `humidity`) and STM32 GNSS/IMU fields (`lat`, `lon`, `alt_m`, `sog_knots`, `cog_deg`, `gps_fix`, `sats`, `heading`, `pitch`, `roll`) are accepted when finite and valid. Note that the current STM32 build uses BMP280 (no `humidity` sensor) and omits unfitted `turb_ntu`, `ec_uscm`, `temp_w2`, and `depth_cm`.
 
 `id` must match the backend's configured node allowlist. `ts` is milliseconds
 since STM32 boot (uint32), not Unix time. Measurements must be JSON numbers,
-not quoted strings, NaN or Infinity. Conductivity is in microSiemens/cm.
-The current backend accepts no GPS/battery/extra fields; coordinate schema
-changes before adding them. Maximum HTTP JSON body size is 4096 bytes.
+not quoted strings, NaN or Infinity. Conductivity (`ec_uscm`), when sent, is in
+microSiemens/cm. Maximum HTTP JSON body size is 4096 bytes.
 
 ## Transport to agree before radio integration
 

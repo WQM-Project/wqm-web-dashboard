@@ -23,6 +23,16 @@ export function MetricTrendChart({
   onMetricChange: (key: MetricKey) => void;
 }) {
   const metric = METRICS.find((item) => item.key === metricKey)!;
+  const chartData = readings
+    .map((row) => ({
+      time: timeLabel(row.recorded_at),
+      value: row.payload[metricKey],
+    }))
+    .filter(
+      (point): point is { time: string; value: number } =>
+        point.value !== undefined,
+    );
+  const latestValue = chartData.at(-1)?.value;
   return (
     <Panel
       className="lg:col-span-3"
@@ -43,11 +53,11 @@ export function MetricTrendChart({
         </select>
       }
     >
-      {readings.length ? (
+      {chartData.length ? (
         <>
           <div className="mb-5 flex items-baseline gap-2">
             <span className="text-2xl font-semibold tabular-nums">
-              {readings.at(-1)!.payload[metricKey].toFixed(metric.decimals)}
+              {latestValue?.toFixed(metric.decimals) ?? "—"}
             </span>
             <span className="text-xs text-muted-foreground">
               {metric.unit || "pH"} · latest reading
@@ -56,14 +66,11 @@ export function MetricTrendChart({
           <div
             className="h-60 w-full"
             role="img"
-            aria-label={`${metric.label} trend for ${readings.length} readings; exact values available in the readings table`}
+            aria-label={`${metric.label} trend for ${chartData.length} readings; exact values available in the readings table`}
           >
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart
-                data={readings.map((row) => ({
-                  time: timeLabel(row.recorded_at),
-                  value: row.payload[metricKey],
-                }))}
+                data={chartData}
                 margin={{ left: -20, right: 8, top: 8, bottom: 0 }}
               >
                 <CartesianGrid
@@ -98,7 +105,7 @@ export function MetricTrendChart({
                   stroke="var(--wqm-chart-line)"
                   fill="var(--wqm-chart-fill)"
                   strokeWidth={2}
-                  dot={readings.length === 1}
+                  dot={chartData.length === 1}
                   isAnimationActive={false}
                 />
               </AreaChart>

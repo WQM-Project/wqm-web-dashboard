@@ -22,9 +22,9 @@ const analysis = [
 ];
 const workspaceTools = ['Trends', 'Location', 'Packets'] as const;
 const sensorGroups = [
-  { label: 'Water', icon: Droplets, measurements: ['pH', 'Dissolved oxygen', 'Turbidity', 'Dissolved solids', 'Conductivity', 'Redox potential', 'Temperature'] },
-  { label: 'Depth', icon: Gauge, measurements: ['Water depth'] },
-  { label: 'Weather', icon: Wind, measurements: ['Air temperature', 'Humidity', 'Pressure'] },
+  { label: 'Water', icon: Droplets, measurements: ['pH', 'Dissolved oxygen', 'Dissolved solids', 'Redox potential', 'Water temperature'] },
+  { label: 'Navigation', icon: Gauge, measurements: ['GPS position & course', 'BNO085 heading / pitch / roll'] },
+  { label: 'Atmosphere', icon: Wind, measurements: ['Air temperature (BMP280)', 'Barometric pressure (DO comp)'] },
 ];
 
 export function Features() {
@@ -86,7 +86,7 @@ export function Features() {
               <div className="mb-5 flex min-h-32 items-center justify-center rounded-2xl bg-[var(--landing-bg)] p-4" aria-hidden="true">
                 {tool === 'Trends' && <svg viewBox="0 0 240 100" className="w-full"><path d="M0 80H240M0 45H240M0 10H240" stroke="var(--landing-border)" fill="none" /><path d="M2 70L22 65L42 72L62 48L82 55L102 38L122 44L142 22L162 30L182 15L202 25L222 10L238 18" stroke="currentColor" strokeWidth="2" fill="none" /></svg>}
                 {tool === 'Location' && <MapPin className="size-16 stroke-1" />}
-                {tool === 'Packets' && <div className="w-full space-y-2 font-mono text-xs"><p>{'{ "id": "WQM-001",'}</p><p className="pl-3">"pH": …,</p><p className="pl-3">"turb_ntu": …</p><p>{'}'}</p></div>}
+                {tool === 'Packets' && <div className="w-full space-y-2 font-mono text-xs"><p>{'{ "id": "WQM-001",'}</p><p className="pl-3">"pH": …,</p><p className="pl-3">"do_mgl": …</p><p>{'}'}</p></div>}
               </div>
               <div aria-live="polite"><h3 className="text-xl font-medium">{tool === 'Trends' ? 'Read the river over time.' : tool === 'Location' ? 'Put readings in context.' : 'See what arrived.'}</h3><p className={cn(muted, 'mt-2')}>{tool === 'Trends' ? 'Choose a measurement and a time window. Inspect stored readings or take them with you as a CSV.' : tool === 'Location' ? 'Explore the boat map in normal, satellite, terrain or hybrid view. Real GPS integration is still to come.' : 'Inspect the original packet and its recorded measurements, with separate workspace readings and gateway history.'}</p></div>
               <Link href="/dashboard" className="mt-auto inline-flex items-center gap-2 pt-5 text-sm underline-offset-4 hover:underline focus-visible:outline-2">Open the workspace <ArrowUpRight className="size-4" aria-hidden="true" /></Link>
