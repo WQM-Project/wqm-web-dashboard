@@ -12,12 +12,13 @@ export type DashboardData = {
   checkedAt: string;
   truncated: boolean;
 };
+// The first four are the headline cards, so they are sensors the boat always sends.
 export const METRICS = [
   { key: "pH", label: "pH", unit: "", decimals: 2 },
-  { key: "turb_ntu", label: "Turbidity", unit: "NTU", decimals: 1 },
   { key: "do_mgl", label: "Dissolved oxygen", unit: "mg/L", decimals: 2 },
   { key: "temp_w1", label: "Water temperature", unit: "°C", decimals: 1 },
   { key: "tds_ppm", label: "Dissolved solids", unit: "ppm", decimals: 1 },
+  { key: "turb_ntu", label: "Turbidity", unit: "NTU", decimals: 1 },
   { key: "ec_uscm", label: "Conductivity", unit: "µS/cm", decimals: 1 },
   { key: "orp_mv", label: "Redox potential", unit: "mV", decimals: 1 },
   {
@@ -32,6 +33,9 @@ export const METRICS = [
   { key: "pressure_hpa", label: "Pressure", unit: "hPa", decimals: 1 },
 ] as const;
 export type MetricKey = (typeof METRICS)[number]["key"];
+/** Reserved sensors are absent from the current boat's packets; show a dash. */
+export const formatValue = (value: number | undefined, decimals: number) =>
+  value === undefined ? "—" : value.toFixed(decimals);
 export const timeLabel = (value: string) =>
   new Intl.DateTimeFormat("en-IN", {
     hour: "2-digit",

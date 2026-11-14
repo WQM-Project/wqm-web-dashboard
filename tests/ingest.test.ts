@@ -63,6 +63,17 @@ test('accepts gateway GPS fields and rejects inconsistent ones', () => {
   assert.equal(packetSchema.safeParse({ ...located, utc_s: 1793833000 }).success, true)
   assert.equal(packetSchema.safeParse({ ...located, utc_s: 0 }).success, false)
 })
+test('accepts the active STM32 packet exactly as the gateway uploads it', () => {
+  // Captured from the gateway serial log: reserved sensors absent, navigation fields present.
+  const active = { id: 'WQM-001', ts: 3894, pH: 6.57, tds_ppm: 611.5, do_mgl: 7.72,
+    orp_mv: 145.8, temp_w1: -127, temp_air: 0, pressure_hpa: 0, alt_m: 0, sog_knots: 0,
+    cog_deg: 0, heading: 0, pitch: 0, roll: 0, sats: 0, gps_fix: false, utc_s: 1794676858 }
+  assert.equal(packetSchema.safeParse(active).success, true)
+  const { do_mgl: _missing, ...withoutRequired } = active
+  assert.equal(packetSchema.safeParse(withoutRequired).success, false)
+  assert.equal(packetSchema.safeParse({ ...active, sats: 1.5 }).success, false)
+  assert.equal(packetSchema.safeParse({ ...active, unexpected: 1 }).success, false)
+})
 test('fails closed without configuration and never acknowledges failed storage', async () => {
   const handler = createIngestHandler({ key, allowedNodes: ['WQM-001'], save: async () => { throw new Error('secret database detail') } })
   const response = await handler(request())

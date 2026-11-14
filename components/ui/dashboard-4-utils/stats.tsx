@@ -13,7 +13,8 @@ import { Card } from "@/components/ui/card";
 import { METRICS } from "@/lib/dashboard";
 import type { ChartProps } from "./shared";
 
-const icons = [Droplets, Waves, Wind, Thermometer];
+// pH, dissolved oxygen, water temperature, dissolved solids (METRICS order).
+const icons = [Droplets, Wind, Thermometer, Waves];
 export function DashboardStats({ readings }: ChartProps) {
   const latest = readings.at(-1)?.payload;
   const first = readings[0]?.payload;
@@ -22,9 +23,10 @@ export function DashboardStats({ readings }: ChartProps) {
       {METRICS.slice(0, 4).map((metric, index) => {
         const Icon = icons[index];
         const value = latest?.[metric.key];
+        const start = first?.[metric.key];
         const delta =
-          value !== undefined && first && readings.length > 1
-            ? value - first[metric.key]
+          value !== undefined && start !== undefined && readings.length > 1
+            ? value - start
             : null;
         const Change =
           delta !== null && delta < 0 ? ArrowDownRight : ArrowUpRight;

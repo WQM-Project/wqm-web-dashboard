@@ -9,7 +9,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { METRICS, timeLabel } from "@/lib/dashboard";
+import { formatValue, METRICS, timeLabel } from "@/lib/dashboard";
 import type { MetricKey } from "@/lib/dashboard";
 import { EmptyChart, Panel, tooltipStyle } from "./shared";
 import type { ChartProps } from "./shared";
@@ -47,7 +47,7 @@ export function MetricTrendChart({
         <>
           <div className="mb-5 flex items-baseline gap-2">
             <span className="text-2xl font-semibold tabular-nums">
-              {readings.at(-1)!.payload[metricKey].toFixed(metric.decimals)}
+              {formatValue(readings.at(-1)!.payload[metricKey], metric.decimals)}
             </span>
             <span className="text-xs text-muted-foreground">
               {metric.unit || "pH"} · latest reading

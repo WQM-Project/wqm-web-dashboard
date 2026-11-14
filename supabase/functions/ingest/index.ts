@@ -6,13 +6,20 @@ import { createHash, timingSafeEqual } from 'node:crypto'
 import { z } from 'npm:zod@3.25.76'
 
 const measurement = z.number().finite()
+const optionalMeasurement = measurement.optional()
 export const packetSchema = z.object({
   id: z.string().regex(/^[A-Za-z0-9_-]{1,64}$/),
   ts: z.number().int().min(0).max(4294967295),
-  pH: measurement, turb_ntu: measurement, tds_ppm: measurement,
-  do_mgl: measurement, ec_uscm: measurement, orp_mv: measurement,
-  temp_w1: measurement, temp_w2: measurement, depth_cm: measurement,
-  temp_air: measurement, humidity: measurement, pressure_hpa: measurement,
+  // Sensors fitted to the active STM32 board; the gateway refuses packets without them.
+  pH: measurement, tds_ppm: measurement, do_mgl: measurement, orp_mv: measurement,
+  temp_w1: measurement, temp_air: measurement, pressure_hpa: measurement,
+  // Reserved sensors not fitted to the current board; forwarded when present.
+  turb_ntu: optionalMeasurement, ec_uscm: optionalMeasurement,
+  temp_w2: optionalMeasurement, depth_cm: optionalMeasurement, humidity: optionalMeasurement,
+  // STM32 navigation (NEO-M8N GNSS + IMU), forwarded as reported.
+  alt_m: optionalMeasurement, sog_knots: optionalMeasurement, cog_deg: optionalMeasurement,
+  heading: optionalMeasurement, pitch: optionalMeasurement, roll: optionalMeasurement,
+  sats: z.number().int().min(0).max(255).optional(),
   // Added by the gateway from the SIM7600 GNSS. Absent until the first fix.
   lat: z.number().finite().min(-90).max(90).optional(),
   lon: z.number().finite().min(-180).max(180).optional(),
