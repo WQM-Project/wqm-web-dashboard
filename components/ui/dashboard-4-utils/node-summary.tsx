@@ -25,8 +25,8 @@ export function NodeSummary({ readings }: { readings: Reading[] }) {
         </span>
       </p>
       <p className="mt-5 border-t border-border pt-4 text-xs leading-5 text-muted-foreground">
-        Boat and LoRa setup is pending. Stored packets do not indicate live
-        hardware connectivity.
+        STM32-to-ESP32 onboard UART integration is in progress. Stored packets
+        do not indicate live field deployment yet.
       </p>
     </Panel>
   );

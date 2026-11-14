@@ -254,7 +254,7 @@ export function Dashboard({
         row.packet_id,
         row.device_id,
         row.recorded_at,
-        ...METRICS.map((item) => row.payload[item.key]),
+        ...METRICS.map((item) => row.payload[item.key] ?? ""),
         row.payload.ts,
       ].join(","),
     );
@@ -334,8 +334,8 @@ export function Dashboard({
             <FlaskConical className="mb-3 size-5 text-muted-foreground" />
             <p className="text-xs font-semibold">Built for the river.</p>
             <p className="mt-2 text-xs leading-5 text-muted-foreground">
-              Explore the workspace while boat and LoRa integration are in
-              progress.
+              Explore the workspace while onboard STM32-to-ESP32 UART
+              integration is in progress.
             </p>
           </div>
           <div className="mt-5 flex items-center gap-2 px-2">
@@ -562,7 +562,7 @@ export function Dashboard({
                       onInspect={setInspected}
                     />
                     <Panel
-                      title="All 12 measurements"
+                      title="All measurements"
                       subtitle="Latest stored packet from the selected node."
                     >
                       <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
@@ -572,8 +572,7 @@ export function Dashboard({
                               {item.label}
                             </p>
                             <p className="mt-2 text-xl font-semibold tabular-nums">
-                              {formatValue(
-                                latest?.payload[item.key],
+                              {latest?.payload[item.key]?.toFixed(
                                 item.decimals,
                               )}
                               <span className="ml-1 text-xs font-normal text-muted-foreground">

@@ -74,6 +74,16 @@ test('accepts the active STM32 packet exactly as the gateway uploads it', () => 
   assert.equal(packetSchema.safeParse({ ...active, sats: 1.5 }).success, false)
   assert.equal(packetSchema.safeParse({ ...active, unexpected: 1 }).success, false)
 })
+test('accepts active 19-field STM32 packets without legacy optional sensors', () => {
+  const stmPacket = {
+    id: 'WQM-001', ts: 166519, pH: 7.12, tds_ppm: 310.0, do_mgl: 8.84,
+    orp_mv: 91.6, temp_w1: 23.62, temp_air: 28.60, pressure_hpa: 1013.25,
+    lat: 0.0, lon: 0.0, alt_m: 0.0, sog_knots: 0.0, cog_deg: 0.0,
+    gps_fix: 0, sats: 0, heading: 12.5, pitch: -0.4, roll: 0.8,
+  }
+  assert.equal(packetSchema.safeParse(stmPacket).success, true)
+  assert.equal(packetSchema.safeParse({ ...stmPacket, lat: undefined, lon: undefined, gps_fix: 1 }).success, false)
+})
 test('fails closed without configuration and never acknowledges failed storage', async () => {
   const handler = createIngestHandler({ key, allowedNodes: ['WQM-001'], save: async () => { throw new Error('secret database detail') } })
   const response = await handler(request())

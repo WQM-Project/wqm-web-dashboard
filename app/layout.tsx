@@ -10,7 +10,7 @@ const _geistMono = Geist_Mono({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "WQM — Real-Time River Water Quality Monitoring",
   description:
-    "A remote-controlled river boat streaming twelve water-quality parameters over LoRa, with WQI forecasting and instant SMS alerts for Himalayan river systems.",
+    "A sensor-equipped river boat streaming calibrated water-quality telemetry directly via an onboard ESP32 and SIM7600 4G LTE/GNSS gateway, with WQI forecasting and alerts for Himalayan river systems.",
   icons: {
     icon: [
       // Navy mark on a transparent ground reads well on a light tab bar.

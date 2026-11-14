@@ -188,24 +188,29 @@ Only one channel satisfies both.
 
 ## Telemetry Contract
 
-The gateway relays the packet emitted by [`edge-sensing-node`](https://github.com/WQM-Project/edge-sensing-node). This is the **authoritative input shape** — the database schema below is derived from it field-for-field.
+The onboard ESP32 + SIM7600 gateway receives the active UART packet emitted by [`edge-sensing-node`](https://github.com/WQM-Project/edge-sensing-node), attaches SIM7600 GNSS coordinates and UTC time, and uploads over 4G LTE (required water/atmospheric fields + optional GNSS and BNO085 IMU fields; reserved probes like turbidity/EC/depth/humidity remain optional).
 
 ```json
 {
   "id": "WQM-001",
-  "ts": 123456789,
+  "ts": 166519,
   "pH": 7.12,
-  "turb_ntu": 42.5,
   "tds_ppm": 310.0,
-  "do_mgl": 6.85,
-  "ec_uscm": 680.2,
-  "orp_mv": 215.0,
-  "temp_w1": 23.50,
-  "temp_w2": 23.48,
-  "depth_cm": 35.2,
+  "do_mgl": 8.84,
+  "orp_mv": 91.6,
+  "temp_w1": 23.62,
   "temp_air": 28.60,
-  "humidity": 65.3,
-  "pressure_hpa": 1013.25
+  "pressure_hpa": 1013.25,
+  "lat": 0.0,
+  "lon": 0.0,
+  "alt_m": 0.0,
+  "sog_knots": 0.0,
+  "cog_deg": 0.0,
+  "gps_fix": 0,
+  "sats": 0,
+  "heading": 0.0,
+  "pitch": 0.0,
+  "roll": 0.0
 }
 ```
 
@@ -213,26 +218,24 @@ The gateway relays the packet emitted by [`edge-sensing-node`](https://github.co
 |---|---|---|---|
 | `id` | `text` | — | Node identifier; supports multi-node deployment. |
 | `ts` | `bigint` | ms | `HAL_GetTick()` — **milliseconds since node boot, not epoch.** See [conflict 4](#the-specific-conflicts). |
-| `pH` | `real` | 0–14 | Two-point calibrated. |
-| `turb_ntu` | `real` | NTU | Quadratic polynomial fit. |
-| `tds_ppm` | `real` | ppm | Temperature-compensated. |
-| `do_mgl` | `real` | mg/L | Pressure + temperature compensated. |
-| `ec_uscm` | `real` | µS/cm | Electrical conductivity. |
-| `orp_mv` | `real` | mV | Oxidation-reduction potential. |
-| `temp_w1` / `temp_w2` | `real` | °C | Primary + backup water temperature (DS18B20). |
-| `depth_cm` | `real` | cm | Ultrasonic water level (JSN-SR04T). |
-| `temp_air` / `humidity` / `pressure_hpa` | `real` | °C / % / hPa | Atmospheric (BME280). |
+| `pH` | `real` | 0–14 | robu.in SEN0161 V1 on `PA3` (`PH_SCALE = 4.942f`, `PH_OFFSET = -2.713f`, 2:1 divider). |
+| `tds_ppm` | `real` | ppm | SEN0244 on `PA5` (`TDS_CAL_K = 1.036f`, DS18B20 temperature-compensated). |
+| `do_mgl` | `real` | mg/L | SEN0237-A on `PA4` (7.5% KCl, `DO_CAL1_V = 764` mV at `24°C`, BMP280 pressure-compensated). |
+| `orp_mv` | `real` | mV | SEN0165 on `PC3` (2.0V midpoint formula, 20-sample trimmed mean). |
+| `temp_w1` | `real` | °C | Active water temperature (DS18B20 on `PE6`). |
+| `temp_air` / `pressure_hpa` | `real` | °C / hPa | Atmospheric (`BMP280` on `PB8/PB9`, no humidity sensor on current build). |
+| `heading` / `pitch` / `roll` | `real` | deg | *Optional:* BNO085 9-DOF IMU Euler angles. |
+| `turb_ntu` / `ec_uscm` / `temp_w2` / `depth_cm` / `humidity` | `real` | — | *Optional / reserved:* Accepted when present, omitted in current STM32 JSON build. |
 
-### Fields added by the gateway
-
-The gateway appends these before upload; the STM32 never sends them.
+### Fields added or reconciled by the gateway
 
 | Field | Type | Unit | Notes |
 |---|---|---|---|
-| `gps_fix` | `boolean` | — | `true` when a settled SIM7600 GNSS position is attached. Always present. |
-| `lat` / `lon` | `real` | degrees | WGS84, 6 decimals. Only with a fix; always sent together. |
-| `gps_age_s` | `integer` | s | Age of that fix when the packet was stamped. Large values mean the boat may have moved since. |
-| `utc_s` | `integer` | s | Unix time when the gateway received the packet, from the mobile network or GPS clock. Correct even for packets queued offline. Absent until the clock is set. |
+| `gps_fix` | `boolean` \| `int` | — | `true`/`1` when settled GNSS fix is attached; `false`/`0` otherwise. |
+| `lat` / `lon` | `real` | degrees | WGS84, 6 decimals. SIM7600 GNSS takes priority; unfixed `(0, 0)` placeholders ignored by map. |
+| `alt_m` / `sog_knots` / `cog_deg` / `sats` | `number` | m / kn / deg | *Optional:* STM32 NEO-M8N navigation fields. |
+| `gps_age_s` | `integer` | s | Age of SIM7600 fix when packet was stamped. |
+| `utc_s` | `integer` | s | Unix time from SIM7600 network/GPS clock. |
 
 The packet UUID travels in the `X-Packet-Id` header and is stored as
 `telemetry_packets.packet_id`. The STM32 → ESP32 UART contract is documented in

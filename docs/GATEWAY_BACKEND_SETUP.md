@@ -2,7 +2,7 @@
 
 The implemented routes are `GET /api/health` and `POST /api/ingest`.
 Health proves the web service responds; it does not prove database readiness.
-The backend uses Supabase Postgres. Firmware and physical 4G/LoRa tests are separate work.
+The backend uses Supabase Postgres. Onboard STM32-to-ESP32 UART wiring tests and field boat trials are separate work.
 
 ## Setup
 
@@ -88,18 +88,14 @@ printing them. Keep the pooler password and API keys current after rotation.
 - `X-Packet-Id: <UUID>`: generate once when accepting a NEW edge packet;
   retain the UUID and unchanged payload through all upload retries.
   Do not use node uptime alone as a unique ID: it resets on reboot.
-- Body: the existing 14-field STM32 JSON. All twelve measurements are required,
-  finite JSON numbers; `id` is an authorised device ID and `ts` is uint32 uptime
-  in milliseconds. No additional fields are accepted in this version.
+- Body: STM32/gateway JSON containing the required active fields (`id`, `ts`, `pH`, `tds_ppm`, `do_mgl`, `orp_mv`, `temp_w1`, `temp_air`, `pressure_hpa`), plus optional reserved sensors (`turb_ntu`, `ec_uscm`, `temp_w2`, `depth_cm`, `humidity`) and optional GNSS/IMU telemetry (`lat`, `lon`, `alt_m`, `sog_knots`, `cog_deg`, `gps_fix`, `sats`, `gps_age_s`, `heading`, `pitch`, `roll`, `utc_s`). All numbers must be finite JSON numbers.
 - Preserve conductivity in microSiemens/cm (`ec_uscm`), not milliSiemens/cm.
-- No GPS/battery fields are invented. Finite readings outside sensor operating
-  ranges are retained for diagnostics; this endpoint does not grade water quality.
-- Radio framing, frequency, maximum payload/fragmentation, wiring and sender
-  retries must be agreed with the edge team after identifying the actual radios.
-  This backend contract does not establish a working LoRa connection.
+- STM32-to-ESP32 transport uses direct onboard 3.3 V UART RX–TX (`115200 8N1`,
+  newline-delimited JSON with `ACK`/`NAK` replies, no LoRa radio or shore relay);
+  see the `gateway` repository's `docs/STM32_INTEGRATION.md` for wiring and retries.
 
 ```json
-{"id":"WQM-001","ts":12000,"pH":7.12,"turb_ntu":42.5,"tds_ppm":310,"do_mgl":6.85,"ec_uscm":680.2,"orp_mv":215,"temp_w1":23.5,"temp_w2":23.48,"depth_cm":35.2,"temp_air":28.6,"humidity":65.3,"pressure_hpa":1013.25}
+{"id":"WQM-001","ts":166519,"pH":7.12,"tds_ppm":310,"do_mgl":8.84,"orp_mv":91.6,"temp_w1":23.62,"temp_air":28.6,"pressure_hpa":1013.25,"lat":0.0,"lon":0.0,"alt_m":0.0,"sog_knots":0.0,"cog_deg":0.0,"gps_fix":0,"sats":0,"heading":0.0,"pitch":0.0,"roll":0.0}
 ```
 
 ## Response handling

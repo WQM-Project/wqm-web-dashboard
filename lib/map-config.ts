@@ -12,13 +12,21 @@ export type BoatPosition = {
 // Positions older than this when sent are labelled as possibly outdated.
 export const STALE_FIX_SECONDS = 120;
 
-// Newest packet carrying a GNSS position; packets without a fix are skipped.
+// Newest packet carrying a valid GNSS position; unfixed / (0, 0) packets are skipped.
 export function latestBoatPosition(
-  readings: { recorded_at: string; payload: { lat?: number; lon?: number; gps_age_s?: number } }[],
+  readings: {
+    recorded_at: string;
+    payload: { lat?: number; lon?: number; gps_fix?: boolean | number; gps_age_s?: number };
+  }[],
 ): BoatPosition | undefined {
   for (let i = readings.length - 1; i >= 0; i--) {
     const { recorded_at, payload } = readings[i];
-    if (payload.lat !== undefined && payload.lon !== undefined)
+    if (payload.gps_fix === false || payload.gps_fix === 0) continue;
+    if (
+      payload.lat !== undefined &&
+      payload.lon !== undefined &&
+      (payload.lat !== 0 || payload.lon !== 0)
+    )
       return {
         latitude: payload.lat,
         longitude: payload.lon,

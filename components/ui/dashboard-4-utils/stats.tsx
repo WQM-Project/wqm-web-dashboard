@@ -23,10 +23,10 @@ export function DashboardStats({ readings }: ChartProps) {
       {METRICS.slice(0, 4).map((metric, index) => {
         const Icon = icons[index];
         const value = latest?.[metric.key];
-        const start = first?.[metric.key];
+        const firstValue = first?.[metric.key];
         const delta =
-          value !== undefined && start !== undefined && readings.length > 1
-            ? value - start
+          value !== undefined && firstValue !== undefined && readings.length > 1
+            ? value - firstValue
             : null;
         const Change =
           delta !== null && delta < 0 ? ArrowDownRight : ArrowUpRight;

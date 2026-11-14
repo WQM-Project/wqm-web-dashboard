@@ -6,27 +6,38 @@ const optionalMeasurement = measurement.optional()
 export const packetSchema = z.object({
   id: z.string().regex(/^[A-Za-z0-9_-]{1,64}$/),
   ts: z.number().int().min(0).max(4294967295),
-  // Sensors fitted to the active STM32 board; the gateway refuses packets without them.
-  pH: measurement, tds_ppm: measurement, do_mgl: measurement, orp_mv: measurement,
-  temp_w1: measurement, temp_air: measurement, pressure_hpa: measurement,
-  // Reserved sensors not fitted to the current board; forwarded when present.
-  turb_ntu: optionalMeasurement, ec_uscm: optionalMeasurement,
-  temp_w2: optionalMeasurement, depth_cm: optionalMeasurement, humidity: optionalMeasurement,
-  // STM32 navigation (NEO-M8N GNSS + IMU), forwarded as reported.
-  alt_m: optionalMeasurement, sog_knots: optionalMeasurement, cog_deg: optionalMeasurement,
-  heading: optionalMeasurement, pitch: optionalMeasurement, roll: optionalMeasurement,
-  sats: z.number().int().min(0).max(255).optional(),
-  // Added by the gateway from the SIM7600 GNSS. Absent until the first fix.
+  pH: measurement,
+  tds_ppm: measurement,
+  do_mgl: measurement,
+  orp_mv: measurement,
+  temp_w1: measurement,
+  temp_air: measurement,
+  pressure_hpa: measurement,
+  // Optional/reserved sensor fields (omitted on current STM32 build without those probes).
+  turb_ntu: optionalMeasurement,
+  ec_uscm: optionalMeasurement,
+  temp_w2: optionalMeasurement,
+  depth_cm: optionalMeasurement,
+  humidity: optionalMeasurement,
+  // Optional STM32 NEO-M8N GNSS and BNO085 IMU telemetry.
   lat: z.number().finite().min(-90).max(90).optional(),
   lon: z.number().finite().min(-180).max(180).optional(),
-  gps_fix: z.boolean().optional(),
+  alt_m: optionalMeasurement,
+  sog_knots: optionalMeasurement,
+  cog_deg: optionalMeasurement,
+  gps_fix: z.union([z.boolean(), z.number().int().min(0).max(2)]).optional(),
+  sats: z.number().int().min(0).max(255).optional(),
   gps_age_s: z.number().int().min(0).max(4294967295).optional(),
+  heading: optionalMeasurement,
+  pitch: optionalMeasurement,
+  roll: optionalMeasurement,
   // Gateway arrival time, Unix seconds UTC; absent until its clock is set.
   utc_s: z.number().int().min(1767225600).max(4294967295).optional(),
 }).strict().superRefine((packet, context) => {
   if ((packet.lat === undefined) !== (packet.lon === undefined))
     context.addIssue({ code: 'custom', path: ['lon'], message: 'lat and lon must be sent together' })
-  if (packet.gps_fix && packet.lat === undefined)
+  const hasFix = typeof packet.gps_fix === 'boolean' ? packet.gps_fix : (packet.gps_fix ?? 0) > 0
+  if (hasFix && packet.lat === undefined)
     context.addIssue({ code: 'custom', path: ['lat'], message: 'gps_fix requires lat and lon' })
 })
 export type Packet = z.infer<typeof packetSchema>

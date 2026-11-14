@@ -11,9 +11,9 @@ const cardStyle = 'h-full overflow-hidden rounded-3xl border-[var(--landing-bord
 const muted = 'text-sm leading-relaxed text-[var(--landing-muted)]';
 const control = 'rounded-full border px-3 py-2 text-xs transition-colors focus-visible:outline-2 focus-visible:outline-offset-2';
 const stages = [
-  { title: 'On the boat', icon: Ship, detail: 'The STM32 node packages sensor readings into JSON. Boat and radio integration is the next hardware stage.' },
-  { title: 'To the shore', icon: RadioTower, detail: 'The planned LoRa link carries the packet to the shore gateway. Only the gateway needs mobile internet.' },
-  { title: 'Into storage', icon: Database, detail: 'Cellular HTTPS uploads have been tested. The backend saves each packet once and acknowledges a retry without creating a duplicate.' },
+  { title: 'On the boat', icon: Ship, detail: 'The STM32 node samples active water, barometer, and IMU sensors and sends each JSON reading over direct 3.3V UART RX–TX.' },
+  { title: 'ESP32 + GNSS', icon: RadioTower, detail: 'An onboard ESP32 validates the packet, attaches live SIM7600 GNSS coordinates and UTC time, and queues it in flash.' },
+  { title: 'Into storage', icon: Database, detail: 'SIM7600 4G LTE uploads directly over verified HTTPS. The backend saves each packet once and acknowledges retries without creating a duplicate.' },
 ];
 const analysis = [
   { label: 'Classification', title: 'A clearer picture of water quality.', detail: 'The ML repository includes an XGBoost pipeline for four quality classes: Excellent, Good, Poor and Dangerous. Dashboard integration is still to come.', tags: ['Excellent', 'Good', 'Poor', 'Dangerous'] },
@@ -22,9 +22,9 @@ const analysis = [
 ];
 const workspaceTools = ['Trends', 'Location', 'Packets'] as const;
 const sensorGroups = [
-  { label: 'Water', icon: Droplets, measurements: ['pH', 'Dissolved oxygen', 'Turbidity', 'Dissolved solids', 'Conductivity', 'Redox potential', 'Temperature'] },
-  { label: 'Depth', icon: Gauge, measurements: ['Water depth'] },
-  { label: 'Weather', icon: Wind, measurements: ['Air temperature', 'Humidity', 'Pressure'] },
+  { label: 'Water', icon: Droplets, measurements: ['pH', 'Dissolved oxygen', 'Dissolved solids', 'Redox potential', 'Water temperature'] },
+  { label: 'Navigation', icon: Gauge, measurements: ['GPS position & course', 'BNO085 heading / pitch / roll'] },
+  { label: 'Atmosphere', icon: Wind, measurements: ['Air temperature (BMP280)', 'Barometric pressure (DO comp)'] },
 ];
 
 export function Features() {
@@ -42,7 +42,7 @@ export function Features() {
         <ScrollReveal className="mx-auto mb-8 max-w-2xl text-center md:mb-10">
           <p className="mb-5 text-sm text-[var(--landing-muted)]">What we’re building</p>
           <h2 id="features-title" className="text-balance font-serif text-4xl leading-tight md:text-6xl"><ScrollText text="One boat. A wider view." spread={3} /></h2>
-          <p className="mt-6 text-pretty leading-relaxed text-[var(--landing-muted)]">From measurements on the river to a workspace on shore. Explore the pieces that make WQM work.</p>
+          <p className="mt-6 text-pretty leading-relaxed text-[var(--landing-muted)]">From measurements on the river straight to the cloud workspace. Explore the pieces that make WQM work.</p>
         </ScrollReveal>
 
         <div className="grid grid-cols-6 gap-4">
@@ -70,10 +70,10 @@ export function Features() {
           <ScrollReveal className="col-span-6 sm:col-span-3 lg:col-span-2">
             <Card className={cardStyle}><CardContent className="flex h-full flex-col p-6">
               <div className="relative mx-auto mb-7 flex size-28 items-center justify-center rounded-full border border-[var(--landing-border)] before:absolute before:-inset-3 before:rounded-full before:border before:border-[var(--landing-border)]"><RadioTower className="size-12 stroke-1" aria-hidden="true" /></div>
-              <h3 className="text-xl font-medium">A link back to shore.</h3>
-              <p className={cn(muted, 'mt-2')}>LoRa is designed to relay small packets from the boat to a gateway, without Wi-Fi on the water.</p>
-              <div className="mt-6 flex items-center justify-between rounded-2xl bg-[var(--landing-bg)] p-4 text-xs"><Ship className="size-5" aria-hidden="true" /><span>Boat</span><ArrowRight className="size-4" aria-hidden="true" /><span>Shore</span><RadioTower className="size-5" aria-hidden="true" /></div>
-              <p className="mt-4 text-xs text-[var(--landing-muted)]">Hardware integration in progress</p>
+              <h3 className="text-xl font-medium">Straight from boat to cloud.</h3>
+              <p className={cn(muted, 'mt-2')}>The STM32 streams JSON over UART RX–TX to an onboard ESP32 + SIM7600 4G LTE & GNSS module — no Wi-Fi or separate shore gateway needed.</p>
+              <div className="mt-6 flex items-center justify-between rounded-2xl bg-[var(--landing-bg)] p-4 text-xs"><Ship className="size-5" aria-hidden="true" /><span>STM32 · UART</span><ArrowRight className="size-4" aria-hidden="true" /><span>ESP32 · 4G</span><RadioTower className="size-5" aria-hidden="true" /></div>
+              <p className="mt-4 text-xs text-[var(--landing-muted)]">Onboard UART & 4G integration</p>
               <a href="https://github.com/WQM-Project/edge-sensing-node" target="_blank" rel="noopener noreferrer" className="mt-auto inline-flex items-center gap-2 pt-5 text-sm underline-offset-4 hover:underline focus-visible:outline-2">Explore the sensing node <ArrowUpRight className="size-4" aria-hidden="true" /></a>
             </CardContent></Card>
           </ScrollReveal>
@@ -86,9 +86,9 @@ export function Features() {
               <div className="mb-5 flex min-h-32 items-center justify-center rounded-2xl bg-[var(--landing-bg)] p-4" aria-hidden="true">
                 {tool === 'Trends' && <svg viewBox="0 0 240 100" className="w-full"><path d="M0 80H240M0 45H240M0 10H240" stroke="var(--landing-border)" fill="none" /><path d="M2 70L22 65L42 72L62 48L82 55L102 38L122 44L142 22L162 30L182 15L202 25L222 10L238 18" stroke="currentColor" strokeWidth="2" fill="none" /></svg>}
                 {tool === 'Location' && <MapPin className="size-16 stroke-1" />}
-                {tool === 'Packets' && <div className="w-full space-y-2 font-mono text-xs"><p>{'{ "id": "WQM-001",'}</p><p className="pl-3">"pH": …,</p><p className="pl-3">"turb_ntu": …</p><p>{'}'}</p></div>}
+                {tool === 'Packets' && <div className="w-full space-y-2 font-mono text-xs"><p>{'{ "id": "WQM-001",'}</p><p className="pl-3">"pH": …,</p><p className="pl-3">"do_mgl": …</p><p>{'}'}</p></div>}
               </div>
-              <div aria-live="polite"><h3 className="text-xl font-medium">{tool === 'Trends' ? 'Read the river over time.' : tool === 'Location' ? 'Put readings in context.' : 'See what arrived.'}</h3><p className={cn(muted, 'mt-2')}>{tool === 'Trends' ? 'Choose a measurement and a time window. Inspect stored readings or take them with you as a CSV.' : tool === 'Location' ? 'Explore the boat map in normal, satellite, terrain or hybrid view. Real GPS integration is still to come.' : 'Inspect the original packet and its recorded measurements, with separate workspace readings and gateway history.'}</p></div>
+              <div aria-live="polite"><h3 className="text-xl font-medium">{tool === 'Trends' ? 'Read the river over time.' : tool === 'Location' ? 'Put readings in context.' : 'See what arrived.'}</h3><p className={cn(muted, 'mt-2')}>{tool === 'Trends' ? 'Choose a measurement and a time window. Inspect stored readings or take them with you as a CSV.' : tool === 'Location' ? 'Explore the boat map in normal, satellite, terrain or hybrid view. Onboard SIM7600 GNSS attaches live GPS coordinates when fixed.' : 'Inspect the original packet and its recorded measurements, with separate workspace readings and gateway history.'}</p></div>
               <Link href="/dashboard" className="mt-auto inline-flex items-center gap-2 pt-5 text-sm underline-offset-4 hover:underline focus-visible:outline-2">Open the workspace <ArrowUpRight className="size-4" aria-hidden="true" /></Link>
             </CardContent></Card>
           </ScrollReveal>

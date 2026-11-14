@@ -2,9 +2,9 @@
  * Telemetry contract.
  *
  * This mirrors, field for field, the JSON packet emitted by the STM32 edge
- * sensing node and relayed to the cloud by the LoRa gateway. It is the single
- * source of truth for the landing page and, later, for the Supabase schema and
- * the generated database types.
+ * sensing node and uploaded to the cloud by the onboard ESP32 + SIM7600 gateway.
+ * It is the single source of truth for the landing page and, later, for the
+ * Supabase schema and the generated database types.
  *
  * See: https://github.com/WQM-Project/edge-sensing-node
  */
@@ -36,13 +36,13 @@ export const PACKET_META = {
   ts: 123456789,
 }
 
-/** The twelve measured parameters carried in every packet. */
+/** The active and optional parameters carried in STM32 packets. */
 export const PARAMETERS: Parameter[] = [
   {
     key: "pH",
     label: "pH",
     unit: "",
-    sensor: "DFRobot SEN0161",
+    sensor: "robu.in SEN0161 V1",
     range: "0 – 14",
     sample: 7.12,
     decimals: 2,
@@ -50,7 +50,7 @@ export const PARAMETERS: Parameter[] = [
   },
   {
     key: "turb_ntu",
-    label: "Turbidity",
+    label: "Turbidity (optional)",
     unit: "NTU",
     sensor: "DFRobot SEN0189",
     range: "0 – 3000 NTU",
@@ -132,7 +132,7 @@ export const PARAMETERS: Parameter[] = [
     key: "temp_air",
     label: "Air Temperature",
     unit: "°C",
-    sensor: "BME280",
+    sensor: "BMP280",
     range: "−40 – 85 °C",
     sample: 28.6,
     decimals: 2,
@@ -140,9 +140,9 @@ export const PARAMETERS: Parameter[] = [
   },
   {
     key: "humidity",
-    label: "Relative Humidity",
+    label: "Relative Humidity (optional)",
     unit: "%",
-    sensor: "BME280",
+    sensor: "Optional BME280",
     range: "0 – 100 %",
     sample: 65.3,
     decimals: 1,
@@ -152,7 +152,7 @@ export const PARAMETERS: Parameter[] = [
     key: "pressure_hpa",
     label: "Barometric Pressure",
     unit: "hPa",
-    sensor: "BME280",
+    sensor: "BMP280",
     range: "300 – 1100 hPa",
     sample: 1013.25,
     decimals: 2,

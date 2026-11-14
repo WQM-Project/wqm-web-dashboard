@@ -2,41 +2,36 @@
 
 ## Data expected by the backend
 
-Send one complete JSON object per reading with these exact fields:
-`id`, `ts`, `pH`, `turb_ntu`, `tds_ppm`, `do_mgl`, `ec_uscm`, `orp_mv`,
-`temp_w1`, `temp_w2`, `depth_cm`, `temp_air`, `humidity`, `pressure_hpa`.
+Send one complete JSON object per reading containing all required active fields:
+`id`, `ts`, `pH`, `tds_ppm`, `do_mgl`, `orp_mv`, `temp_w1`, `temp_air`, `pressure_hpa`.
+
+Optional/reserved sensor fields (`turb_ntu`, `ec_uscm`, `temp_w2`, `depth_cm`, `humidity`) and STM32 GNSS/IMU fields (`lat`, `lon`, `alt_m`, `sog_knots`, `cog_deg`, `gps_fix`, `sats`, `heading`, `pitch`, `roll`) are accepted when finite and valid. Note that the current STM32 build uses BMP280 (no `humidity` sensor) and omits unfitted `turb_ntu`, `ec_uscm`, `temp_w2`, and `depth_cm`.
 
 `id` must match the backend's configured node allowlist. `ts` is milliseconds
 since STM32 boot (uint32), not Unix time. Measurements must be JSON numbers,
-not quoted strings, NaN or Infinity. Conductivity is in microSiemens/cm.
-The current backend accepts no GPS/battery/extra fields; coordinate schema
-changes before adding them. Maximum HTTP JSON body size is 4096 bytes.
+not quoted strings, NaN or Infinity. Conductivity (`ec_uscm`), when sent, is in
+microSiemens/cm. Maximum HTTP JSON body size is 4096 bytes.
 
-## Transport to agree before radio integration
+## Onboard STM32 → ESP32 UART transport
 
-The current edge source emits JSON on USART3 at 115200 baud. Agree on explicit
-message framing, keeping debug logs separate from telemetry. A newline after
-each complete object is a proposed UART test framing, not an implemented radio
-protocol. Confirm exact transmitter and receiver models, their interface
-(SPI/UART), radio frequency and matching settings, pins, logic levels and power.
-Confirm radio packet-size limits: fragment/reassemble if needed rather than
-assuming a full JSON reading fits a single radio packet.
+The STM32 edge node communicates directly with the **onboard ESP32 + SIM7600
+4G/GNSS gateway** over 3.3 V UART RX–TX (`115200 8N1`: STM32 TX → ESP32
+`GPIO25` RX, STM32 RX → ESP32 `GPIO26` TX, shared `GND`; no LoRa radio or
+separate shore gateway is used).
 
-Agree on edge sequence/boot identity and radio acknowledgement behaviour if
-radio retransmissions are used. The gateway must recognise repeated edge
-messages if radio-level deduplication is required. Backend deduplication only
-covers HTTP retries using the same gateway-created UUID and unchanged payload.
+- Keep USB debug printing separate from the UART link connected to the ESP32.
+- End each JSON line with `\n` (at most 768 bytes) and wait for `ACK` or `NAK <reason>` from the ESP32 before advancing.
+- Onboard GPS coordinates (`lat`, `lon`, `gps_fix`, `gps_age_s`) and `utc_s` are supplied by the ESP32's SIM7600G-H GNSS module when fixed; unfixed STM32 `(0, 0)` placeholder coordinates are stripped by `stm_link.h`.
 
 ## Gateway responsibility
 
-For each new complete reading, create a UUID, queue it with the unchanged JSON,
-and POST it with `X-Packet-Id` and the gateway Bearer key. Retain that UUID for
-every HTTP retry. Never give the edge or gateway the Supabase secret key.
-See `GATEWAY_BACKEND_SETUP.md` for responses, example packet and backend tests.
+For each valid packet acknowledged with `ACK`, the ESP32 creates a UUID, queues
+it in flash with the enriched JSON, and POSTs it over 4G LTE with `X-Packet-Id`
+and the gateway Bearer key. Retain that UUID for every HTTP retry. Never give
+the edge or gateway the Supabase secret key. See `GATEWAY_BACKEND_SETUP.md` for
+responses, example packet and backend tests.
 
-## Edge test required
+## Bench verification
 
-Provide a mode that repeatedly transmits the documented known example packet
-without live sensors. Verify complete packet reception before connecting the
-radio receiver to the upload path. Record actual interval, packet size and
-radio settings. Hardware and radio behaviour have not yet been validated here.
+Test the STM32 serial line independently or with `gateway/scripts/fake_stm.py`
+and confirm `[STM] Queued` + `ACK` on the ESP32 UART link before boat trials.
