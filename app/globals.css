@@ -322,3 +322,15 @@ html {
     animation-play-state: paused;
   }
 }
+
+/* Top-of-window bar while another page loads (components/route-progress.tsx). */
+.route-progress {
+  position: fixed; inset: 0 0 auto 0; z-index: 9999; height: 2px; pointer-events: none;
+  background: linear-gradient(90deg, transparent, #4f8cff, transparent);
+  background-size: 35% 100%; background-repeat: no-repeat;
+  animation: route-progress-sweep 1.1s ease-in-out infinite;
+}
+@keyframes route-progress-sweep { from { background-position: -35% 0; } to { background-position: 135% 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .route-progress { animation: none; background: #4f8cff; opacity: 0.6; }
+}

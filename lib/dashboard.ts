@@ -21,19 +21,9 @@ export const METRICS = [
   { key: "orp_mv", label: "Redox potential", unit: "mV", decimals: 1 },
   { key: "temp_air", label: "Air temperature", unit: "°C", decimals: 1 },
   { key: "pressure_hpa", label: "Pressure", unit: "hPa", decimals: 1 },
-  { key: "turb_ntu", label: "Turbidity", unit: "NTU", decimals: 1 },
-  { key: "ec_uscm", label: "Conductivity", unit: "µS/cm", decimals: 1 },
-  {
-    key: "temp_w2",
-    label: "Backup water temperature",
-    unit: "°C",
-    decimals: 1,
-  },
-  { key: "depth_cm", label: "Depth", unit: "cm", decimals: 1 },
-  { key: "humidity", label: "Humidity", unit: "%", decimals: 1 },
 ] as const;
 export type MetricKey = (typeof METRICS)[number]["key"];
-/** Reserved sensors are absent from the current boat's packets; show a dash. */
+/** A sensor missing from a packet shows a dash. */
 export const formatValue = (value: number | undefined, decimals: number) =>
   value === undefined ? "—" : value.toFixed(decimals);
 export const timeLabel = (value: string) =>

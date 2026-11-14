@@ -36,7 +36,7 @@ export const PACKET_META = {
   ts: 123456789,
 }
 
-/** The active and optional parameters carried in STM32 packets. */
+/** The parameters the STM32 node sends in every packet. */
 export const PARAMETERS: Parameter[] = [
   {
     key: "pH",
@@ -47,16 +47,6 @@ export const PARAMETERS: Parameter[] = [
     sample: 7.12,
     decimals: 2,
     column: "ph",
-  },
-  {
-    key: "turb_ntu",
-    label: "Turbidity (optional)",
-    unit: "NTU",
-    sensor: "DFRobot SEN0189",
-    range: "0 – 3000 NTU",
-    sample: 42.5,
-    decimals: 1,
-    column: "turbidity_ntu",
   },
   {
     key: "tds_ppm",
@@ -79,16 +69,6 @@ export const PARAMETERS: Parameter[] = [
     column: "do_mgl",
   },
   {
-    key: "ec_uscm",
-    label: "Conductivity",
-    unit: "µS/cm",
-    sensor: "DFRobot DFR0300",
-    range: "0 – 20 mS/cm",
-    sample: 680.2,
-    decimals: 1,
-    column: "ec_uscm",
-  },
-  {
     key: "orp_mv",
     label: "Redox Potential",
     unit: "mV",
@@ -109,26 +89,6 @@ export const PARAMETERS: Parameter[] = [
     column: "temp_water_c",
   },
   {
-    key: "temp_w2",
-    label: "Water Temp (backup)",
-    unit: "°C",
-    sensor: "DS18B20",
-    range: "−55 – 125 °C",
-    sample: 23.48,
-    decimals: 2,
-    column: "temp_water_backup_c",
-  },
-  {
-    key: "depth_cm",
-    label: "Water Depth",
-    unit: "cm",
-    sensor: "JSN-SR04T",
-    range: "20 – 600 cm",
-    sample: 35.2,
-    decimals: 1,
-    column: "depth_cm",
-  },
-  {
     key: "temp_air",
     label: "Air Temperature",
     unit: "°C",
@@ -137,16 +97,6 @@ export const PARAMETERS: Parameter[] = [
     sample: 28.6,
     decimals: 2,
     column: "temp_air_c",
-  },
-  {
-    key: "humidity",
-    label: "Relative Humidity (optional)",
-    unit: "%",
-    sensor: "Optional BME280",
-    range: "0 – 100 %",
-    sample: 65.3,
-    decimals: 1,
-    column: "humidity_pct",
   },
   {
     key: "pressure_hpa",

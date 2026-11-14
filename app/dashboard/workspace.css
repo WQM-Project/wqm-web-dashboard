@@ -103,3 +103,27 @@
   font-weight: 600;
   box-shadow: 0 2px 8px #0003;
 }
+
+/* Dashboard loading screen (app/dashboard/loading.tsx). */
+.wqm-loading-bar {
+  position: fixed; inset: 0 0 auto 0; height: 2px; overflow: hidden;
+  background: linear-gradient(90deg, transparent, var(--foreground), transparent);
+  background-size: 40% 100%; background-repeat: no-repeat;
+  animation: wqm-loading-sweep 1.2s ease-in-out infinite; opacity: 0.5;
+}
+.wqm-loading-logo { animation: wqm-loading-breathe 1.8s ease-in-out infinite; }
+.wqm-loading-track {
+  position: relative; width: 112px; height: 3px; overflow: hidden;
+  border-radius: 999px; background: var(--border);
+}
+.wqm-loading-track span {
+  position: absolute; inset: 0 auto 0 0; width: 40%; border-radius: inherit;
+  background: var(--foreground); animation: wqm-loading-slide 1.2s ease-in-out infinite;
+}
+@keyframes wqm-loading-sweep { from { background-position: -40% 0; } to { background-position: 140% 0; } }
+@keyframes wqm-loading-slide { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
+@keyframes wqm-loading-breathe { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(0.96); } }
+@media (prefers-reduced-motion: reduce) {
+  .wqm-loading-bar, .wqm-loading-logo, .wqm-loading-track span { animation: none; }
+  .wqm-loading-track span { width: 100%; opacity: 0.4; }
+}

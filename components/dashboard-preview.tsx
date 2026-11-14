@@ -45,7 +45,7 @@ export function DashboardPreview() {
     { label: "Quality", value: "Good", sub: "XGBoost class", tone: "emerald" as const },
     { label: "pH", value: "7.12", sub: PARAMETERS[0].sensor, tone: "sky" as const },
     { label: "DO", value: "6.85", sub: "mg/L", tone: "sky" as const },
-    { label: "Turbidity", value: "42.5", sub: "NTU", tone: "amber" as const },
+    { label: "TDS", value: "310", sub: "ppm", tone: "amber" as const },
     { label: "Battery", value: "3.9", sub: "V · node health", tone: "sky" as const },
   ]
 
