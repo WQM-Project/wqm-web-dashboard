@@ -13,6 +13,8 @@
 | Deploy | Push to `main`; Vercel deploys automatically |
 | Reseed Workspace readings (48 h demo set) | `node --env-file=.env.local scripts/seed-demo-november.mjs` (backs up old rows first) |
 | Seed a recorded CSV into Gateway history | `node --env-file=.env.local scripts/seed-pool-session.mjs <file.csv>` |
+| Reset data (dry run; add `--yes` to delete, backup saved first) | `node --env-file=.env.local scripts/reset-data.mjs pond \| since <time> \| gateway-all \| workspace` |
+| Restore a reset | `node --env-file=.env.local scripts/reset-data.mjs restore backups/<file>.json --yes` |
 
 **Where things are**
 - Dashboard views (Overview, Readings, ML Predictions, Boat), day picker, CSV export: `components/ui/dashboard-4.tsx`
