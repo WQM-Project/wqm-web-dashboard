@@ -10,6 +10,7 @@ import {
   Download,
   LayoutDashboard,
   Radio,
+  BrainCircuit,
   RefreshCw,
   Rows3,
   FlaskConical,
@@ -37,13 +38,15 @@ import { QuickActions } from "./dashboard-4-utils/quick-actions";
 import { Panel } from "./dashboard-4-utils/shared";
 import { DashboardLogo } from './dashboard-4-utils/dashboard-logo';
 import { BoatMap } from "./dashboard-4-utils/boat-map";
+import { PredictionsView } from "./dashboard-4-utils/predictions-view";
 import { PacketId } from "./dashboard-4-utils/packet-id";
 import { latestBoatPosition } from "@/lib/map-config";
 
-type View = "overview" | "readings" | "nodes";
+type View = "overview" | "readings" | "predictions" | "nodes";
 const navigation = [
   { key: "overview" as const, label: "Overview", icon: LayoutDashboard },
   { key: "readings" as const, label: "Readings", icon: Rows3 },
+  { key: "predictions" as const, label: "ML Predictions", icon: BrainCircuit },
   { key: "nodes" as const, label: "Boat", icon: Radio },
 ];
 
@@ -437,7 +440,9 @@ export function Dashboard({
                     ? "Water, in perspective."
                     : view === "readings"
                       ? "Every reading, in detail."
-                      : "Your monitoring boat."}
+                      : view === "predictions"
+                        ? "What the water is telling us."
+                        : "Your monitoring boat."}
                 </h1>
                 <p className="mt-2 text-xs leading-5 text-muted-foreground">
                   Water-quality measurements and trends for Boat 01.
@@ -585,6 +590,7 @@ export function Dashboard({
                     </Panel>
                   </div>
                 )}
+                {view === "predictions" && <PredictionsView readings={readings} />}
                 {view === "nodes" && (
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {nodes.map((id) => {
