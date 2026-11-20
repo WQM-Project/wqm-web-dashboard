@@ -4,6 +4,24 @@
 
 **Live:** <https://wqm-web-dashboard.vercel.app>
 
+## Quick reference
+
+| Task | Command (run in this folder) |
+|---|---|
+| Run locally | `npm run dev` → <http://localhost:3000/dashboard> |
+| Typecheck / tests | `npm run typecheck` · `npm test` |
+| Deploy | Push to `main`; Vercel deploys automatically |
+| Reseed Workspace readings (48 h demo set) | `node --env-file=.env.local scripts/seed-demo-november.mjs` (backs up old rows first) |
+| Seed a recorded CSV into Gateway history | `node --env-file=.env.local scripts/seed-pool-session.mjs <file.csv>` |
+
+**Where things are**
+- Dashboard views (Overview, Readings, ML Predictions, Boat), day picker, CSV export: `components/ui/dashboard-4.tsx`
+- ML Predictions (score, DO warning, saturation, forecast, anomalies, pollution screen, sensor health, hotspots): `lib/predictions.ts` + `components/ui/dashboard-4-utils/predictions-view.tsx`
+- Readings API (up to 3000 gateway packets, 500 demo): `lib/server/dashboard.ts`
+- Readings, units and the packet fields shown/exported: `lib/dashboard.ts`
+
+**Data sources** (top-right selector): *Gateway history* = what the boat uploaded (`telemetry_packets`); *Workspace readings* = reference dataset (`dashboard_demo_packets`).
+
 This repo owns everything a human sees or is alerted by. It ingests telemetry relayed from the [`gateway`](https://github.com/WQM-Project/gateway), persists it, renders it as live geospatial and time-series visualisations, surfaces predictions from [`water-quality-ml`](https://github.com/WQM-Project/water-quality-ml), and dispatches threshold-breach alerts to local authorities.
 
 > [!NOTE]

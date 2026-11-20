@@ -75,7 +75,7 @@ function subScore(key: Param, v: number, tempC?: number) {
       return 1;
   }
 }
-const WEIGHTS: Partial<Record<Param, number>> = { do_mgl: 0.4, pH: 0.3, tds_ppm: 0.2, orp_mv: 0.1 };
+export const WEIGHTS: Partial<Record<Param, number>> = { do_mgl: 0.4, pH: 0.3, tds_ppm: 0.2, orp_mv: 0.1 };
 
 /** Weighted 0–100 index from the latest valid value of each parameter in the recent window. */
 export function qualityScore(rows: Reading[]): Score | null {
