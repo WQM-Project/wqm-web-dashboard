@@ -28,7 +28,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { dateLabel, formatValue, METRICS, packetForDisplay, timeLabel } from "@/lib/dashboard";
+import { dateLabel, formatValue, METRICS, PACKET_FIELDS, packetForDisplay, timeLabel } from "@/lib/dashboard";
 import type { DashboardData, MetricKey, Reading } from "@/lib/dashboard";
 import { DashboardStats } from "./dashboard-4-utils/stats";
 import { MetricTrendChart } from "./dashboard-4-utils/metric-trend-chart";
@@ -286,22 +286,20 @@ export function Dashboard({
   // Whole history, not just the time window, so a quiet hour keeps the last fix.
   const position = latestBoatPosition(all.filter((row) => row.device_id === selectedNode));
   function exportCsv() {
-    const header = [
-      "packet_id",
-      "device_id",
-      "recorded_at_utc",
-      ...METRICS.map((item) => item.key),
-      "node_uptime_ms",
-    ];
-    const lines = readings.map((row) =>
-      [
+    // Every field the boat sends, plus when the server stored it (UTC and IST).
+    const fields = PACKET_FIELDS.filter((key) => key !== "id");
+    const header = ["packet_id", "device_id", "recorded_at_utc", "recorded_at_ist", ...fields];
+    const ist = (iso: string) => new Date(Date.parse(iso) + 330 * 60000).toISOString().slice(0, 19).replace("T", " ");
+    const lines = readings.map((row) => {
+      const payload = row.payload as Record<string, unknown>;
+      return [
         row.packet_id,
         row.device_id,
         row.recorded_at,
-        ...METRICS.map((item) => row.payload[item.key] ?? ""),
-        row.payload.ts,
-      ].join(","),
-    );
+        ist(row.recorded_at),
+        ...fields.map((key) => payload[key] ?? ""),
+      ].join(",");
+    });
     const url = URL.createObjectURL(
       new Blob([header.join(",") + "\n" + lines.join("\n")], {
         type: "text/csv;charset=utf-8;",
@@ -309,7 +307,7 @@ export function Dashboard({
     );
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `wqm-${source === "demo" ? "workspace" : "gateway"}-boat-01-${hours}h.csv`;
+    anchor.download = `wqm-${source === "demo" ? "workspace" : "gateway"}-boat-01-${day ?? "latest"}-${hours}h.csv`;
     anchor.click();
     URL.revokeObjectURL(url);
   }

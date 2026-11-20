@@ -29,7 +29,7 @@ export const GAP_MS = 30 * 60000;
 // Fields the boat sends today, in display order. Older stored packets (and the
 // demo set) may also hold retired sensors such as turbidity or humidity; the
 // packet viewer leaves those out.
-const PACKET_FIELDS = [
+export const PACKET_FIELDS = [
   "id", "ts", ...METRICS.map((m) => m.key),
   "lat", "lon", "alt_m", "sog_knots", "cog_deg", "gps_fix", "sats", "gps_age_s",
   "heading", "pitch", "roll", "utc_s",
