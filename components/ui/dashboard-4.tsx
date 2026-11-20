@@ -26,7 +26,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { dateLabel, formatValue, METRICS, timeLabel } from "@/lib/dashboard";
+import { dateLabel, formatValue, METRICS, packetForDisplay, timeLabel } from "@/lib/dashboard";
 import type { DashboardData, MetricKey, Reading } from "@/lib/dashboard";
 import { DashboardStats } from "./dashboard-4-utils/stats";
 import { MetricTrendChart } from "./dashboard-4-utils/metric-trend-chart";
@@ -673,7 +673,7 @@ export function Dashboard({
             The ts field is node uptime, not a calendar timestamp.
           </p>
           <pre className="overflow-x-auto rounded-lg bg-background p-4 text-xs leading-6">
-            {JSON.stringify(inspected?.payload, null, 2)}
+            {JSON.stringify(packetForDisplay(inspected?.payload), null, 2)}
           </pre>
         </DialogContent>
       </Dialog>

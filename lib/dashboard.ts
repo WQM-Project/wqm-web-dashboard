@@ -23,6 +23,23 @@ export const METRICS = [
   { key: "pressure_hpa", label: "Pressure", unit: "hPa", decimals: 1 },
 ] as const;
 export type MetricKey = (typeof METRICS)[number]["key"];
+
+// Fields the boat sends today, in display order. Older stored packets (and the
+// demo set) may also hold retired sensors such as turbidity or humidity; the
+// packet viewer leaves those out.
+const PACKET_FIELDS = [
+  "id", "ts", ...METRICS.map((m) => m.key),
+  "lat", "lon", "alt_m", "sog_knots", "cog_deg", "gps_fix", "sats", "gps_age_s",
+  "heading", "pitch", "roll", "utc_s",
+] as const;
+
+export function packetForDisplay(payload: Packet | undefined) {
+  if (!payload) return undefined;
+  const source = payload as Record<string, unknown>;
+  return Object.fromEntries(
+    PACKET_FIELDS.filter((key) => source[key] !== undefined).map((key) => [key, source[key]]),
+  );
+}
 /** A sensor missing from a packet shows a dash. */
 export const formatValue = (value: number | undefined, decimals: number) =>
   value === undefined ? "—" : value.toFixed(decimals);

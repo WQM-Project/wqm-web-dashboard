@@ -98,10 +98,6 @@ try {
         id,
         ts: step * 900000,
         pH: round(7.25 + Math.sin(phase + node) * 0.24 + noise() * 0.07),
-        turb_ntu: round(
-          14 + node * 5 + burst * (28 + node * 5) + noise() * 3,
-          1,
-        ),
         tds_ppm: round(
           290 + node * 28 + 24 * Math.sin(phase) + noise() * 12,
           1,
@@ -109,16 +105,9 @@ try {
         do_mgl: round(
           7.4 - (water - 22) * 0.15 - burst * 0.35 + noise() * 0.12,
         ),
-        ec_uscm: round(
-          590 + node * 50 + Math.sin(phase) * 45 + noise() * 15,
-          1,
-        ),
         orp_mv: round(220 + Math.sin(phase + 0.8) * 20 + noise() * 5, 1),
         temp_w1: round(water),
-        temp_w2: round(water + noise() * 0.18),
-        depth_cm: round(65 + node * 15 + Math.sin(phase) * 4, 1),
         temp_air: round(27 + Math.sin(phase - 1.3) * 4 + noise() * 0.4, 1),
-        humidity: round(65 - Math.sin(phase - 1.3) * 10 + noise() * 2, 1),
         pressure_hpa: round(1009 + Math.sin(phase) * 2 + noise() * 0.3),
       };
       rows.push({
