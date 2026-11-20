@@ -9,7 +9,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { formatValue, METRICS, timeLabel } from "@/lib/dashboard";
+import { formatValue, GAP_MS, METRICS, timeLabel } from "@/lib/dashboard";
 import type { MetricKey } from "@/lib/dashboard";
 import { EmptyChart, Panel, tooltipStyle } from "./shared";
 import type { ChartProps } from "./shared";
@@ -23,16 +23,18 @@ export function MetricTrendChart({
   onMetricChange: (key: MetricKey) => void;
 }) {
   const metric = METRICS.find((item) => item.key === metricKey)!;
-  const chartData = readings
-    .map((row) => ({
-      time: timeLabel(row.recorded_at),
-      value: row.payload[metricKey],
-    }))
-    .filter(
-      (point): point is { time: string; value: number } =>
-        point.value !== undefined,
-    );
-  const latestValue = chartData.at(-1)?.value;
+  // A null point breaks the line wherever the boat was off for over 30 minutes.
+  const chartData: { time: string; value: number | null }[] = [];
+  let previous = 0;
+  for (const row of readings) {
+    const value = row.payload[metricKey];
+    if (value === undefined) continue;
+    const t = Date.parse(row.recorded_at);
+    if (previous && t - previous > GAP_MS) chartData.push({ time: "", value: null });
+    chartData.push({ time: timeLabel(row.recorded_at), value });
+    previous = t;
+  }
+  const latestValue = chartData.findLast((point) => point.value !== null)?.value ?? undefined;
   return (
     <Panel
       className="lg:col-span-3"

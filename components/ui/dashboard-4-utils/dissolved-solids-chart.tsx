@@ -9,7 +9,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { timeLabel } from "@/lib/dashboard";
+import { GAP_MS, timeLabel } from "@/lib/dashboard";
 import { EmptyChart, Panel, tooltipStyle } from "./shared";
 import type { ChartProps } from "./shared";
 
@@ -38,10 +38,11 @@ export function DissolvedSolidsChart({ readings }: ChartProps) {
         >
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
-              data={readings.map((row) => ({
-                time: timeLabel(row.recorded_at),
-                tds: row.payload.tds_ppm,
-              }))}
+              data={readings.flatMap((row, i) => {
+                const point = { time: timeLabel(row.recorded_at), tds: row.payload.tds_ppm ?? null };
+                const gap = i > 0 && Date.parse(row.recorded_at) - Date.parse(readings[i - 1].recorded_at) > GAP_MS;
+                return gap ? [{ time: "", tds: null }, point] : [point];
+              })}
               margin={{ left: -30, right: 3 }}
             >
               <CartesianGrid vertical={false} stroke="var(--border)" />

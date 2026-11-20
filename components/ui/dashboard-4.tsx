@@ -11,6 +11,7 @@ import {
   LayoutDashboard,
   Radio,
   BrainCircuit,
+  CalendarDays,
   RefreshCw,
   Rows3,
   FlaskConical,
@@ -39,6 +40,19 @@ import { Panel } from "./dashboard-4-utils/shared";
 import { DashboardLogo } from './dashboard-4-utils/dashboard-logo';
 import { BoatMap } from "./dashboard-4-utils/boat-map";
 import { PredictionsView } from "./dashboard-4-utils/predictions-view";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
+// Calendar days are India Standard Time (UTC+5:30, no daylight saving).
+const istDay = (iso: string) => new Date(Date.parse(iso) + 330 * 60000).toISOString().slice(0, 10);
+const dayToDate = (key: string) => {
+  const [y, m, d] = key.split("-").map(Number);
+  return new Date(y, m - 1, d);
+};
+const dateToDay = (date: Date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+const dayLabel = (key: string) =>
+  dayToDate(key).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 import { PacketId } from "./dashboard-4-utils/packet-id";
 import { latestBoatPosition } from "@/lib/map-config";
 
@@ -58,7 +72,7 @@ function ReadingsTable({
   onInspect: (row: Reading) => void;
 }) {
   const [page, setPage] = useState(0);
-  const size = 8;
+  const [size, setSize] = useState(25);
   const pages = Math.max(1, Math.ceil(readings.length / size));
   const current = Math.min(page, pages - 1);
   const rows = [...readings]
@@ -70,12 +84,33 @@ function ReadingsTable({
       subtitle="Exact stored values. Times are shown in IST."
       className="lg:col-span-4"
       action={
-        <span className="rounded-md bg-muted px-2 py-1 text-xs tabular-nums text-muted-foreground">
-          {readings.length} packets
-        </span>
+        <div className="flex items-center gap-2">
+          <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            Show
+            <select
+              value={size}
+              onChange={(event) => {
+                setSize(Number(event.target.value));
+                setPage(0);
+              }}
+              aria-label="Packets per page"
+              className="rounded-md border border-border bg-card px-1.5 py-1 text-xs text-foreground"
+            >
+              {[8, 25, 50, 100].map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+              <option value={100000}>All</option>
+            </select>
+          </label>
+          <span className="rounded-md bg-muted px-2 py-1 text-xs tabular-nums text-muted-foreground">
+            {readings.length} packets
+          </span>
+        </div>
       }
     >
-      <div className="overflow-x-auto">
+      <div className={cn("overflow-x-auto", size > 25 && "max-h-[640px] overflow-y-auto")}>
         <table className="w-full min-w-[640px] text-left text-xs">
           <thead>
             <tr className="border-b border-border text-muted-foreground">
@@ -107,15 +142,15 @@ function ReadingsTable({
                   {timeLabel(row.recorded_at)}
                 </td>
                 <td className="font-medium">Boat 01</td>
-                <td className="tabular-nums">{row.payload.pH.toFixed(2)}</td>
+                <td className="tabular-nums">{formatValue(row.payload.pH, 2)}</td>
                 <td className="tabular-nums">
-                  {row.payload.tds_ppm.toFixed(1)}
+                  {formatValue(row.payload.tds_ppm, 1)}
                 </td>
                 <td className="tabular-nums">
-                  {row.payload.do_mgl.toFixed(2)}
+                  {formatValue(row.payload.do_mgl, 2)}
                 </td>
                 <td className="tabular-nums">
-                  {row.payload.temp_w1.toFixed(1)}
+                  {formatValue(row.payload.temp_w1, 1)}
                 </td>
                 <td>
                   <button
@@ -195,6 +230,9 @@ export function Dashboard({
   const [data, setData] = useState(initialData);
   const [source, setSource] = useState<"demo" | "gateway">("demo");
   const [hours, setHours] = useState(24);
+  // A chosen calendar day (IST, "YYYY-MM-DD"); null means "latest N hours".
+  const [day, setDay] = useState<string | null>(null);
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [metric, setMetric] = useState<MetricKey>("pH");
   const [view, setView] = useState<View>("overview");
   const [busy, setBusy] = useState(false);
@@ -236,9 +274,12 @@ export function Dashboard({
   const all = active?.readings || [];
   const nodes = [...new Set(all.map((row) => row.device_id))].sort();
   const selectedNode = source === "demo" ? "DEMO-001" : "WQM-001";
-  const reference = all.at(-1)?.recorded_at;
+  const dayRows = day ? all.filter((row) => istDay(row.recorded_at) === day) : all;
+  const reference = dayRows.at(-1)?.recorded_at;
+  // With a day chosen, 1h/6h/24h zoom into the end of that day.
   const cutoff = reference ? Date.parse(reference) - hours * 3600000 : 0;
-  const windowRows = all.filter((row) => Date.parse(row.recorded_at) >= cutoff);
+  const windowRows = dayRows.filter((row) => Date.parse(row.recorded_at) >= cutoff);
+  const dataDays = new Set(all.filter((row) => row.device_id === selectedNode).map((row) => istDay(row.recorded_at)));
   const readings = windowRows.filter((row) => row.device_id === selectedNode);
   const latest = readings.at(-1);
   const demo = source === "demo";
@@ -397,6 +438,7 @@ export function Dashboard({
                 onChange={(event) => {
                   setSource(event.target.value as "demo" | "gateway");
                   setHours(24);
+                  setDay(null);
                 }}
                 className="rounded-lg border border-border bg-card px-3 py-2 text-xs"
               >
@@ -471,7 +513,7 @@ export function Dashboard({
             )}
             {active?.truncated && (
               <p className="mb-4 text-xs text-muted-foreground">
-                Showing the latest 500 stored packets. Export covers this loaded
+                Showing the latest {all.length} stored packets. Export covers this loaded
                 window only.
               </p>
             )}
@@ -500,9 +542,53 @@ export function Dashboard({
                     </button>
                   ))}
                 </div>
+                <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                  <PopoverTrigger asChild>
+                    <button
+                      className={cn(
+                        "flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-[11px] focus-visible:outline-2",
+                        day ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground hover:bg-muted",
+                      )}
+                      aria-label="Choose a day"
+                    >
+                      <CalendarDays className="size-3.5" aria-hidden="true" />
+                      {day ? dayLabel(day) : "Pick a day"}
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="wqm-workspace w-auto border border-border bg-card p-0 text-foreground shadow-lg" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={day ? dayToDate(day) : undefined}
+                      defaultMonth={dayToDate(day ?? [...dataDays].sort().at(-1) ?? istDay(new Date().toISOString()))}
+                      disabled={(date) => !dataDays.has(dateToDay(date))}
+                      onSelect={(date) => {
+                        if (!date) return;
+                        setDay(dateToDay(date));
+                        setHours(24);
+                        setCalendarOpen(false);
+                      }}
+                    />
+                    <div className="flex items-center justify-between gap-3 border-t border-border px-3 py-2 text-[11px] text-muted-foreground">
+                      <span>Days without readings are greyed out.</span>
+                      {day && (
+                        <button
+                          className="rounded-md border border-border px-2 py-1 text-foreground hover:bg-muted"
+                          onClick={() => {
+                            setDay(null);
+                            setCalendarOpen(false);
+                          }}
+                        >
+                          Back to latest
+                        </button>
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </div>
               <span className="text-[11px] text-muted-foreground">
-                {reference
+                {day
+                  ? `Showing ${dayLabel(day)}, ${readings.length} packets`
+                  : reference
                   ? `Window ends ${dateLabel(reference)} IST`
                   : busy
                     ? "Loading readings…"

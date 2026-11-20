@@ -23,6 +23,8 @@ export const METRICS = [
   { key: "pressure_hpa", label: "Pressure", unit: "hPa", decimals: 1 },
 ] as const;
 export type MetricKey = (typeof METRICS)[number]["key"];
+/** Readings further apart than this are drawn as separate runs (boat switched off). */
+export const GAP_MS = 30 * 60000;
 
 // Fields the boat sends today, in display order. Older stored packets (and the
 // demo set) may also hold retired sensors such as turbidity or humidity; the

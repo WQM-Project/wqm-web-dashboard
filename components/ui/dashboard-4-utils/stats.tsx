@@ -17,13 +17,15 @@ import type { ChartProps } from "./shared";
 const icons = [Droplets, Wind, Thermometer, Waves];
 export function DashboardStats({ readings }: ChartProps) {
   const latest = readings.at(-1)?.payload;
-  const first = readings[0]?.payload;
   return (
     <>
       {METRICS.slice(0, 4).map((metric, index) => {
         const Icon = icons[index];
         const value = latest?.[metric.key];
-        const firstValue = first?.[metric.key];
+        // Compare against the first usable reading; a 0 is a sensor placeholder, not a value.
+        const firstValue = readings
+          .map((row) => row.payload[metric.key])
+          .find((v) => v !== undefined && v !== 0);
         const delta =
           value !== undefined && firstValue !== undefined && readings.length > 1
             ? value - firstValue
